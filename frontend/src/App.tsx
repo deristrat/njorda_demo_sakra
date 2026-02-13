@@ -3,6 +3,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoginPage } from "@/pages/LoginPage";
+import { UploadPage } from "@/pages/UploadPage";
+import { DocumentsPage } from "@/pages/DocumentsPage";
+import { DocumentDetailPage } from "@/pages/DocumentDetailPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ClientsPage } from "@/pages/ClientsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
@@ -14,9 +17,12 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<AppLayout />}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/clients" element={<ClientsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/" element={<UploadPage />} />
+            <Route path="/documents" element={<DocumentsPage />} />
+            <Route path="/documents/:id" element={<DocumentDetailPage />} />
+            <Route path="/examples/dashboard" element={<DashboardPage />} />
+            <Route path="/examples/clients" element={<ClientsPage />} />
+            <Route path="/examples/settings" element={<SettingsPage />} />
           </Route>
         </Routes>
         <Toaster richColors position="bottom-right" />

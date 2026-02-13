@@ -1,5 +1,7 @@
 import { useLocation, useNavigate } from "react-router";
 import {
+  Upload,
+  FileText,
   LayoutDashboard,
   Users,
   Settings,
@@ -12,6 +14,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -26,10 +29,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NjordaLogo } from "./NjordaLogo";
 
-const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/" },
-  { label: "Klienter", icon: Users, path: "/clients" },
-  { label: "Inställningar", icon: Settings, path: "/settings" },
+const mainNav = [
+  { label: "Ladda upp", icon: Upload, path: "/" },
+  { label: "Dokument", icon: FileText, path: "/documents" },
+];
+
+const exampleNav = [
+  { label: "Dashboard", icon: LayoutDashboard, path: "/examples/dashboard" },
+  { label: "Klienter", icon: Users, path: "/examples/clients" },
+  { label: "Inställningar", icon: Settings, path: "/examples/settings" },
 ];
 
 export function AppSidebar() {
@@ -48,8 +56,11 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
-                const isActive = location.pathname === item.path;
+              {mainNav.map((item) => {
+                const isActive =
+                  item.path === "/"
+                    ? location.pathname === "/"
+                    : location.pathname.startsWith(item.path);
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
@@ -63,6 +74,26 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>UI Examples</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {exampleNav.map((item) => (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton
+                    isActive={location.pathname === item.path}
+                    onClick={() => navigate(item.path)}
+                    tooltip={item.label}
+                  >
+                    <item.icon className="size-4" />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

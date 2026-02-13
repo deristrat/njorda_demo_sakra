@@ -28,5 +28,8 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Uploads
+backend/uploads/
+
 # Docker
 docker-compose.override.yml

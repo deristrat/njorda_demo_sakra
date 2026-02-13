@@ -9,6 +9,61 @@ BACKEND_DIR = str(ROOT / "backend")
 
 FRONTEND_PORT = 21000
 BACKEND_PORT = 21001
+DB_PORT = 21002
+
+
+# ── Database ────────────────────────────────────────────────────────
+
+
+@task
+def db(c: Context):
+    """Start PostgreSQL database in Docker (port 21002)."""
+    c.run("docker compose up db -d", pty=True)
+
+
+@task
+def db_stop(c: Context):
+    """Stop the PostgreSQL database."""
+    c.run("docker compose stop db", pty=True)
+
+
+@task
+def db_reset(c: Context):
+    """Stop DB, destroy volume, and restart fresh."""
+    c.run("docker compose down -v", pty=True)
+    c.run("docker compose up db -d", pty=True)
+    print("Waiting for DB to be ready...")
+    c.run("sleep 3")
+    with c.cd(BACKEND_DIR):
+        c.run("uv run alembic upgrade head", pty=True)
+        c.run("uv run python -m src.seed", pty=True)
+
+
+@task
+def migrate(c: Context):
+    """Apply all pending Alembic migrations."""
+    with c.cd(BACKEND_DIR):
+        c.run("uv run alembic upgrade head", pty=True)
+
+
+@task(help={"message": "Migration message (required)"})
+def migration(c: Context, message: str):
+    """Create a new Alembic migration.
+
+    Example: inv migration -m "add documents table"
+    """
+    with c.cd(BACKEND_DIR):
+        c.run(f'uv run alembic revision --autogenerate -m "{message}"', pty=True)
+
+
+@task
+def seed(c: Context):
+    """Seed database with demo user."""
+    with c.cd(BACKEND_DIR):
+        c.run("uv run python -m src.seed", pty=True)
+
+
+# ── Setup ───────────────────────────────────────────────────────────
 
 
 @task
@@ -68,3 +123,22 @@ def lint(c: Context):
     """Run linting."""
     with c.cd(FRONTEND_DIR):
         c.run("npm run lint", warn=True, pty=True)
+
+
+@task
+def extract(c: Context, pdf=None, model=None):
+    """Extract structured data from advisory PDFs.
+
+    Examples:
+        invoke extract                          # All models, all PDFs
+        invoke extract --pdf 1                  # All models, PDF #1
+        invoke extract --pdf 1 --model claude-sonnet
+        invoke extract --model gemini-2.5-pro
+    """
+    cmd = "uv run python -m src.extraction.cli"
+    if pdf:
+        cmd += f" --pdf {pdf}"
+    if model:
+        cmd += f" --model {model}"
+    with c.cd(BACKEND_DIR):
+        c.run(cmd, pty=True)
