@@ -1,7 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.routers import health, dashboard, clients, charts, documents
+from src.routers import (
+    health,
+    dashboard,
+    clients,
+    charts,
+    documents,
+    settings,
+    compliance,
+)
 
 app = FastAPI(title="Njorda Advisor API", version="0.1.0")
 
@@ -18,3 +26,5 @@ app.include_router(dashboard.router)
 app.include_router(clients.router)
 app.include_router(charts.router)
 app.include_router(documents.router)
+app.include_router(settings.router)
+app.include_router(compliance.router)

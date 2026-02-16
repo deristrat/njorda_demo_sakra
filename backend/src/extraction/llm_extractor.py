@@ -7,8 +7,10 @@ import os
 from pathlib import Path
 
 import anthropic
+from anthropic.types import ToolParam
 
 from .base import BaseExtractor, ExtractionError, parse_extraction_data
+from .models import ExtractionResult
 from .pdf_reader import read_pdf
 from .prompt import EXTRACTION_TOOL, SYSTEM_PROMPT
 
@@ -42,7 +44,7 @@ class AnthropicExtractor(BaseExtractor):
             model=self._model,
             max_tokens=4096,
             system=SYSTEM_PROMPT,
-            tools=[EXTRACTION_TOOL],
+            tools=[ToolParam(**EXTRACTION_TOOL)],
             tool_choice={"type": "tool", "name": "extract_document_data"},
             messages=[
                 {
@@ -78,4 +80,6 @@ class AnthropicExtractor(BaseExtractor):
                 f"Content: {json.dumps([b.model_dump() for b in message.content], indent=2)}"
             )
 
-        return parse_extraction_data(tool_input, pdf.filename, pdf.page_count, self.name)
+        return parse_extraction_data(
+            tool_input, pdf.filename, pdf.page_count, self.name
+        )

@@ -17,9 +17,13 @@ class Document(Base):
     file_size: Mapped[int] = mapped_column(Integer)
     mime_type: Mapped[str] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(String(20), default="uploaded")
-    user_id: Mapped[int | None] = mapped_column(
-        ForeignKey("users.id"), nullable=True
-    )
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+
+    # Denormalized compliance fields
+    compliance_status: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    compliance_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    compliance_summary: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -34,9 +38,7 @@ class Document(Base):
 
 class DocumentExtraction(Base):
     __tablename__ = "document_extractions"
-    __table_args__ = (
-        Index("ix_doc_extractions_document_id", "document_id"),
-    )
+    __table_args__ = (Index("ix_doc_extractions_document_id", "document_id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     document_id: Mapped[int] = mapped_column(

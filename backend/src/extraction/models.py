@@ -34,7 +34,9 @@ class ExperienceLevel(str, Enum):
 
 
 class ClientInfo(BaseModel):
-    person_number: str | None = Field(None, description="Swedish personnummer (YYYYMMDD-XXXX)")
+    person_number: str | None = Field(
+        None, description="Swedish personnummer (YYYYMMDD-XXXX)"
+    )
     person_name: str | None = None
     address: str | None = None
     email: str | None = None
@@ -49,18 +51,28 @@ class AdvisorInfo(BaseModel):
 
 class SuitabilityAssessment(BaseModel):
     risk_profile: RiskProfile | None = None
-    investment_horizon: str | None = Field(None, description="e.g. '5-10 years', 'long-term'")
+    investment_horizon: str | None = Field(
+        None, description="e.g. '5-10 years', 'long-term'"
+    )
     experience_level: ExperienceLevel | None = None
-    financial_situation: str | None = Field(None, description="Summary of client's financial situation")
-    investment_objective: str | None = Field(None, description="e.g. 'growth', 'income', 'preservation'")
-    loss_tolerance: str | None = Field(None, description="How much loss the client can tolerate")
+    financial_situation: str | None = Field(
+        None, description="Summary of client's financial situation"
+    )
+    investment_objective: str | None = Field(
+        None, description="e.g. 'growth', 'income', 'preservation'"
+    )
+    loss_tolerance: str | None = Field(
+        None, description="How much loss the client can tolerate"
+    )
 
 
 class InvestmentRecommendation(BaseModel):
     product_name: str | None = None
     isin: str | None = Field(None, description="ISIN code if available")
     amount: float | None = Field(None, description="Amount in SEK")
-    percentage: float | None = Field(None, description="Portfolio allocation percentage")
+    percentage: float | None = Field(
+        None, description="Portfolio allocation percentage"
+    )
     motivation: str | None = Field(None, description="Why this product was recommended")
 
 

@@ -1,4 +1,10 @@
-import type { DocumentSummary, DocumentDetail, ProcessEvent } from "@/types";
+import type {
+  DocumentSummary,
+  DocumentDetail,
+  ProcessEvent,
+  ComplianceReport,
+  ComplianceRuleConfig,
+} from "@/types";
 
 const BASE = "/api/documents";
 
@@ -44,6 +50,28 @@ export function processDocumentsSSE(
   return () => evtSource.close();
 }
 
+export async function deleteDocuments(ids: number[]): Promise<{ deleted: number }> {
+  const res = await fetch(`${BASE}/delete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+  return res.json();
+}
+
+export async function bulkRecheckCompliance(
+  ids: number[],
+): Promise<{ results: Array<{ id: number; status: string; message?: string }> }> {
+  const res = await fetch(`${BASE}/bulk-recheck`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) throw new Error(`Recheck failed: ${res.status}`);
+  return res.json();
+}
+
 export async function fetchDocuments(): Promise<DocumentSummary[]> {
   const res = await fetch(BASE);
   if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
@@ -58,4 +86,94 @@ export async function fetchDocument(id: number): Promise<DocumentDetail> {
 
 export function getDocumentFileUrl(id: number): string {
   return `${BASE}/${id}/file`;
+}
+
+// --- Settings ---
+
+export interface ExtractorModel {
+  name: string;
+  provider: string;
+  model_id: string;
+}
+
+export async function fetchExtractorModels(): Promise<ExtractorModel[]> {
+  const res = await fetch("/api/settings/extractor-models");
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchExtractorModel(): Promise<string> {
+  const res = await fetch("/api/settings/extractor-model");
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const data = await res.json();
+  return data.model;
+}
+
+export async function setExtractorModel(model: string): Promise<void> {
+  const res = await fetch("/api/settings/extractor-model", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model }),
+  });
+  if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+}
+
+// --- Compliance ---
+
+export async function fetchComplianceRules(): Promise<ComplianceRuleConfig[]> {
+  const res = await fetch("/api/compliance/rules");
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return res.json();
+}
+
+export async function updateComplianceRule(
+  ruleId: string,
+  update: { enabled?: boolean; severity_override?: string | null },
+): Promise<ComplianceRuleConfig> {
+  const res = await fetch(`/api/compliance/rules/${ruleId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(update),
+  });
+  if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchDocumentCompliance(
+  documentId: number,
+): Promise<ComplianceReport> {
+  const res = await fetch(`/api/compliance/documents/${documentId}`);
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return res.json();
+}
+
+export async function recheckDocumentCompliance(
+  documentId: number,
+): Promise<ComplianceReport> {
+  const res = await fetch(`/api/compliance/documents/${documentId}/recheck`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`Recheck failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchComplianceThresholds(): Promise<{
+  green: number;
+  yellow: number;
+}> {
+  const res = await fetch("/api/compliance/thresholds");
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return res.json();
+}
+
+export async function updateComplianceThresholds(
+  thresholds: { green?: number; yellow?: number },
+): Promise<{ green: number; yellow: number }> {
+  const res = await fetch("/api/compliance/thresholds", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(thresholds),
+  });
+  if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+  return res.json();
 }

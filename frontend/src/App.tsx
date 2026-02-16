@@ -9,6 +9,8 @@ import { DocumentDetailPage } from "@/pages/DocumentDetailPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ClientsPage } from "@/pages/ClientsPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { FontSettingsPage } from "@/pages/FontSettingsPage";
+import { ComplianceSettingsPage } from "@/pages/ComplianceSettingsPage";
 
 export default function App() {
   return (
@@ -20,6 +22,8 @@ export default function App() {
             <Route path="/" element={<UploadPage />} />
             <Route path="/documents" element={<DocumentsPage />} />
             <Route path="/documents/:id" element={<DocumentDetailPage />} />
+            <Route path="/settings" element={<FontSettingsPage />} />
+            <Route path="/settings/compliance" element={<ComplianceSettingsPage />} />
             <Route path="/examples/dashboard" element={<DashboardPage />} />
             <Route path="/examples/clients" element={<ClientsPage />} />
             <Route path="/examples/settings" element={<SettingsPage />} />

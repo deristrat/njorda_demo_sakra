@@ -2,7 +2,9 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatDate } from "@/lib/utils";
+import { ComplianceStatusBadge } from "@/components/compliance/ComplianceStatusBadge";
 import type { DocumentSummary } from "@/types";
 
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -21,6 +23,29 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export const documentColumns: ColumnDef<DocumentSummary>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Markera alla"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Markera rad"
+        onClick={(e) => e.stopPropagation()}
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "original_filename",
     header: ({ column }) => (
@@ -118,6 +143,26 @@ export const documentColumns: ColumnDef<DocumentSummary>[] = [
       </Button>
     ),
     cell: ({ row }) => formatDate(row.getValue("created_at")),
+  },
+  {
+    accessorKey: "compliance_score",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        className="-ml-3 h-8 text-xs"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Regelefterlevnad
+        <ArrowUpDown className="ml-1 size-3" />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <ComplianceStatusBadge
+        status={row.original.compliance_status}
+        score={row.original.compliance_score}
+        summary={row.original.compliance_summary}
+      />
+    ),
   },
   {
     accessorKey: "status",

@@ -2,13 +2,21 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import {
   ArrowLeft,
-  FileText,
+  ChevronDown,
   ExternalLink,
+  PanelRightClose,
+  PanelRightOpen,
 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -20,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { fetchDocument, getDocumentFileUrl } from "@/lib/api";
 import { formatDate, formatSEK } from "@/lib/utils";
+import { CompliancePanel } from "@/components/compliance/CompliancePanel";
 import type { DocumentDetail, ExtractionData } from "@/types";
 
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -58,6 +67,7 @@ export function DocumentDetailPage() {
   const navigate = useNavigate();
   const [doc, setDoc] = useState<DocumentDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showPdfPane, setShowPdfPane] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -118,18 +128,43 @@ export function DocumentDetailPage() {
           <Badge variant={statusVariant}>
             {STATUS_LABELS[doc.status] || doc.status}
           </Badge>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center">
             <Button
               variant="outline"
               size="sm"
+              className="rounded-r-none border-r-0"
               onClick={() => window.open(getDocumentFileUrl(doc.id), "_blank")}
             >
               <ExternalLink className="mr-1 size-4" />
               Visa PDF
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="rounded-l-none px-2">
+                  <ChevronDown className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setShowPdfPane((v) => !v)}>
+                  {showPdfPane ? (
+                    <>
+                      <PanelRightClose className="mr-2 size-4" />
+                      Dölj PDF
+                    </>
+                  ) : (
+                    <>
+                      <PanelRightOpen className="mr-2 size-4" />
+                      Visa bredvid
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
+        <div className={showPdfPane ? "flex gap-6" : ""}>
+        <div className={showPdfPane ? "min-w-0 flex-1 space-y-6" : "space-y-6"}>
         {/* Dokumentinformation */}
         <Card>
           <CardHeader>
@@ -362,6 +397,23 @@ export function DocumentDetailPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Regelefterlevnad */}
+        {doc.status === "completed" && (
+          <CompliancePanel documentId={doc.id} />
+        )}
+        </div>
+
+        {showPdfPane && (
+          <div className="w-[45%] shrink-0 sticky top-6 self-start">
+            <iframe
+              src={getDocumentFileUrl(doc.id)}
+              className="h-[calc(100vh-10rem)] w-full rounded-lg border"
+              title="PDF-förhandsgranskning"
+            />
+          </div>
+        )}
+        </div>
       </div>
     </>
   );

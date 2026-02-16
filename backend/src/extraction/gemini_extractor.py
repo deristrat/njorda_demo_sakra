@@ -10,6 +10,7 @@ from google import genai
 from google.genai import types
 
 from .base import BaseExtractor, ExtractionError, parse_extraction_data
+from .models import ExtractionResult
 from .pdf_reader import read_pdf
 from .prompt import GEMINI_SYSTEM_PROMPT, GEMINI_USER_PROMPT
 
@@ -23,7 +24,11 @@ class GeminiExtractor(BaseExtractor):
         model: str = DEFAULT_MODEL,
         display_name: str | None = None,
     ):
-        key = api_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        key = (
+            api_key
+            or os.environ.get("GEMINI_API_KEY")
+            or os.environ.get("GOOGLE_API_KEY")
+        )
         if not key:
             raise ExtractionError(
                 "No API key provided. Set GEMINI_API_KEY or GOOGLE_API_KEY env var."
@@ -52,6 +57,8 @@ class GeminiExtractor(BaseExtractor):
             ),
         )
 
+        if not response.text:
+            raise ExtractionError("Gemini returned empty response")
         data = self._parse_json(response.text)
         return parse_extraction_data(data, pdf.filename, pdf.page_count, self.name)
 

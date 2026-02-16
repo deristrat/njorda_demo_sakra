@@ -53,6 +53,9 @@ export interface DocumentSummary {
   client_name: string | null;
   advisor_name: string | null;
   page_count: number | null;
+  compliance_status: string | null;
+  compliance_score: number | null;
+  compliance_summary: ComplianceSummaryData | null;
 }
 
 export interface ExtractionSummary {
@@ -124,4 +127,59 @@ export interface ProcessEvent {
   message?: string;
   document_type?: string;
   client_name?: string;
+  compliance_status?: string;
+  compliance_score?: number;
+}
+
+// Compliance types
+
+export interface ComplianceSummaryData {
+  total_rules: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  warnings: number;
+  errors: number;
+}
+
+export interface ComplianceFinding {
+  message: string;
+  context?: Record<string, unknown>;
+}
+
+export interface ComplianceRuleOutcome {
+  rule_id: string;
+  rule_name: string;
+  category: string;
+  tier: number;
+  rule_type: string;
+  status: "passed" | "failed" | "skipped";
+  severity: string;
+  findings: ComplianceFinding[];
+  remediation: string | null;
+}
+
+export interface ComplianceReport {
+  outcomes: ComplianceRuleOutcome[];
+  score: number;
+  status: "green" | "yellow" | "red";
+  summary: ComplianceSummaryData;
+}
+
+export interface ComplianceRuleConfig {
+  rule_id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  tier: number;
+  rule_type: string;
+  rule_params: Record<string, unknown> | null;
+  document_types: string[] | null;
+  default_severity: string;
+  severity_override: string | null;
+  max_deduction: number;
+  remediation: string | null;
+  parent_rule_id: string | null;
+  enabled: boolean;
+  sort_order: number;
 }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import {
   Upload,
@@ -5,8 +6,10 @@ import {
   LayoutDashboard,
   Users,
   Settings,
+  ShieldCheck,
   LogOut,
   ChevronUp,
+  ChevronRight,
 } from "lucide-react";
 import {
   Sidebar,
@@ -22,6 +25,11 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -32,6 +40,8 @@ import { NjordaLogo } from "./NjordaLogo";
 const mainNav = [
   { label: "Ladda upp", icon: Upload, path: "/" },
   { label: "Dokument", icon: FileText, path: "/documents" },
+  { label: "Regelefterlevnad", icon: ShieldCheck, path: "/settings/compliance" },
+  { label: "Inställningar", icon: Settings, path: "/settings" },
 ];
 
 const exampleNav = [
@@ -45,6 +55,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const [examplesOpen, setExamplesOpen] = useState(false);
 
   return (
     <Sidebar collapsible="icon">
@@ -79,23 +90,34 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>UI Examples</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {exampleNav.map((item) => (
-                <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton
-                    isActive={location.pathname === item.path}
-                    onClick={() => navigate(item.path)}
-                    tooltip={item.label}
-                  >
-                    <item.icon className="size-4" />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
+          <Collapsible open={examplesOpen} onOpenChange={setExamplesOpen}>
+            <CollapsibleTrigger asChild>
+              <SidebarGroupLabel className="cursor-pointer select-none">
+                <ChevronRight
+                  className={`size-3 mr-1 transition-transform duration-200 ${examplesOpen ? "rotate-90" : ""}`}
+                />
+                UI Examples
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {exampleNav.map((item) => (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        isActive={location.pathname === item.path}
+                        onClick={() => navigate(item.path)}
+                        tooltip={item.label}
+                      >
+                        <item.icon className="size-4" />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
         </SidebarGroup>
       </SidebarContent>
 

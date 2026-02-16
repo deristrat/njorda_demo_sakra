@@ -7,9 +7,11 @@ import {
   getFilteredRowModel,
   flexRender,
   type SortingState,
+  type RowSelectionState,
 } from "@tanstack/react-table";
-import { Search } from "lucide-react";
+import { Search, Trash2, RefreshCw, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -19,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchDocuments } from "@/lib/api";
+import { fetchDocuments, deleteDocuments, bulkRecheckCompliance } from "@/lib/api";
 import { documentColumns } from "./documentColumns";
 import type { DocumentSummary } from "@/types";
 
@@ -29,6 +31,8 @@ export function DocumentsTable() {
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [actionLoading, setActionLoading] = useState<"delete" | "recheck" | null>(null);
 
   useEffect(() => {
     fetchDocuments()
@@ -40,13 +44,48 @@ export function DocumentsTable() {
   const table = useReactTable({
     data,
     columns: documentColumns,
-    state: { sorting, globalFilter },
+    state: { sorting, globalFilter, rowSelection },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    enableRowSelection: true,
   });
+
+  const selectedRows = table.getFilteredSelectedRowModel().rows;
+  const selectedIds = selectedRows.map((r) => r.original.id);
+
+  async function handleDelete() {
+    if (selectedIds.length === 0) return;
+    setActionLoading("delete");
+    try {
+      await deleteDocuments(selectedIds);
+      setData((prev) => prev.filter((d) => !selectedIds.includes(d.id)));
+      setRowSelection({});
+    } catch (err) {
+      console.error("Delete failed:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleRecheck() {
+    if (selectedIds.length === 0) return;
+    setActionLoading("recheck");
+    try {
+      await bulkRecheckCompliance(selectedIds);
+      // Refresh data to get updated compliance scores
+      const updated = await fetchDocuments();
+      setData(updated);
+      setRowSelection({});
+    } catch (err) {
+      console.error("Recheck failed:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -59,14 +98,50 @@ export function DocumentsTable() {
 
   return (
     <div className="space-y-4">
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Sök dokument..."
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="bg-card pl-9"
-        />
+      <div className="flex items-center gap-3">
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Sök dokument..."
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="bg-card pl-9"
+          />
+        </div>
+
+        {selectedIds.length > 0 && (
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-sm text-muted-foreground">
+              {selectedIds.length} markerade
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRecheck}
+              disabled={actionLoading !== null}
+            >
+              {actionLoading === "recheck" ? (
+                <Loader2 className="mr-1 size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-1 size-4" />
+              )}
+              Kontrollera regler
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+              disabled={actionLoading !== null}
+            >
+              {actionLoading === "delete" ? (
+                <Loader2 className="mr-1 size-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-1 size-4" />
+              )}
+              Ta bort
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="rounded-lg border bg-card">
@@ -92,6 +167,7 @@ export function DocumentsTable() {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
                   className="cursor-pointer transition-colors hover:bg-secondary/50"
                   onClick={() => navigate(`/documents/${row.original.id}`)}
                 >

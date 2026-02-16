@@ -126,6 +126,33 @@ def lint(c: Context):
 
 
 @task
+def pre_commit(c: Context):
+    """Run all checks before committing (lint, typecheck, build)."""
+    print("==> Linting Python...")
+    with c.cd(BACKEND_DIR):
+        c.run("uv run ruff check .", pty=True)
+        c.run("uv run ruff format --check .", pty=True)
+
+    print("\n==> Linting TypeScript...")
+    with c.cd(FRONTEND_DIR):
+        c.run("npm run lint", pty=True)
+
+    print("\n==> Type checking Python...")
+    with c.cd(BACKEND_DIR):
+        c.run("uv run pyright", pty=True)
+
+    print("\n==> Type checking TypeScript...")
+    with c.cd(FRONTEND_DIR):
+        c.run("npx tsc --noEmit", pty=True)
+
+    print("\n==> Building frontend...")
+    with c.cd(FRONTEND_DIR):
+        c.run("npm run build", pty=True)
+
+    print("\n==> All checks passed!")
+
+
+@task
 def extract(c: Context, pdf=None, model=None):
     """Extract structured data from advisory PDFs.
 
@@ -140,5 +167,22 @@ def extract(c: Context, pdf=None, model=None):
         cmd += f" --pdf {pdf}"
     if model:
         cmd += f" --model {model}"
+    with c.cd(BACKEND_DIR):
+        c.run(cmd, pty=True)
+
+
+@task(help={"concurrency": "Max concurrent API calls (default 10)", "limit": "Process first N PDFs only"})
+def scan_new(c: Context, concurrency=10, limit=None):
+    """Scan real-world test PDFs (test_pdfs/new/) with Gemini Flash.
+
+    Examples:
+        invoke scan-new                     # All PDFs, 10 concurrent
+        invoke scan-new --limit 5           # First 5 only
+        invoke scan-new --concurrency 5     # Slower, fewer API calls
+    """
+    cmd = "uv run python -m src.extraction.scan_new"
+    cmd += f" --concurrency {concurrency}"
+    if limit:
+        cmd += f" --limit {limit}"
     with c.cd(BACKEND_DIR):
         c.run(cmd, pty=True)

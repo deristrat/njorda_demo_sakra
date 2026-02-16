@@ -71,9 +71,11 @@ def load_env():
 def make_extractor(display_name: str, provider: str, model_id: str) -> BaseExtractor:
     if provider == "anthropic":
         from .llm_extractor import AnthropicExtractor
+
         return AnthropicExtractor(model=model_id, display_name=display_name)
     elif provider == "gemini":
         from .gemini_extractor import GeminiExtractor
+
         return GeminiExtractor(model=model_id, display_name=display_name)
     else:
         raise ValueError(f"Unknown provider: {provider}")
@@ -114,13 +116,29 @@ def _get_field(result: ExtractionResult, field_name: str) -> str:
     elif field_name == "document_date":
         return str(result.document_date) if result.document_date else "-"
     elif field_name == "client_name":
-        return result.client.person_name if result.client and result.client.person_name else "-"
+        return (
+            result.client.person_name
+            if result.client and result.client.person_name
+            else "-"
+        )
     elif field_name == "client_pnr":
-        return result.client.person_number if result.client and result.client.person_number else "-"
+        return (
+            result.client.person_number
+            if result.client and result.client.person_number
+            else "-"
+        )
     elif field_name == "advisor_name":
-        return result.advisor.advisor_name if result.advisor and result.advisor.advisor_name else "-"
+        return (
+            result.advisor.advisor_name
+            if result.advisor and result.advisor.advisor_name
+            else "-"
+        )
     elif field_name == "advisor_firm":
-        return result.advisor.firm_name if result.advisor and result.advisor.firm_name else "-"
+        return (
+            result.advisor.firm_name
+            if result.advisor and result.advisor.firm_name
+            else "-"
+        )
     elif field_name == "risk_profile":
         v = result.suitability.risk_profile if result.suitability else None
         return v.value if v else "-"
@@ -128,9 +146,17 @@ def _get_field(result: ExtractionResult, field_name: str) -> str:
         v = result.suitability.experience_level if result.suitability else None
         return v.value if v else "-"
     elif field_name == "horizon":
-        return result.suitability.investment_horizon if result.suitability and result.suitability.investment_horizon else "-"
+        return (
+            result.suitability.investment_horizon
+            if result.suitability and result.suitability.investment_horizon
+            else "-"
+        )
     elif field_name == "objective":
-        v = result.suitability.investment_objective if result.suitability and result.suitability.investment_objective else "-"
+        v = (
+            result.suitability.investment_objective
+            if result.suitability and result.suitability.investment_objective
+            else "-"
+        )
         return v[:40] if len(v) > 40 else v
     elif field_name == "num_recs":
         return str(len(result.recommendations)) if result.recommendations else "0"
@@ -216,7 +242,7 @@ def print_comparison(filename: str, page_count: int | None, runs: list[RunResult
     total_count = 0
 
     for field_key, field_label in COMPARE_FIELDS:
-        values = [_get_field(r.result, field_key) for r in successful]
+        values = [_get_field(r.result, field_key) for r in successful if r.result]
 
         # Skip fields that are all empty
         if all(v == "-" for v in values):
@@ -248,7 +274,9 @@ def print_comparison(filename: str, page_count: int | None, runs: list[RunResult
     if total_count > 0:
         pct = agree_count / total_count * 100
         color = GREEN if pct >= 90 else YELLOW if pct >= 70 else RED
-        print(f"\n  {BOLD}AGREEMENT:{RESET} {color}{agree_count}/{total_count} fields ({pct:.0f}%){RESET}")
+        print(
+            f"\n  {BOLD}AGREEMENT:{RESET} {color}{agree_count}/{total_count} fields ({pct:.0f}%){RESET}"
+        )
 
     if failed:
         print(f"\n  {BOLD}ERRORS{RESET}")
@@ -271,7 +299,9 @@ async def run_single(extractor: BaseExtractor, pdf_path: Path) -> RunResult:
         return RunResult(extractor.name, None, str(e), elapsed)
 
 
-async def run_pdf(extractors: list[BaseExtractor], path: Path) -> tuple[str, int | None, list[RunResult]]:
+async def run_pdf(
+    extractors: list[BaseExtractor], path: Path
+) -> tuple[str, int | None, list[RunResult]]:
     """Run all extractors on one PDF. Returns (filename, page_count, runs)."""
     tasks = [run_single(ext, path) for ext in extractors]
     runs = await asyncio.gather(*tasks)
@@ -298,7 +328,9 @@ async def run(pdf_paths: list[Path], model_configs: list[tuple[str, str, str]]):
         sys.exit(1)
 
     n_total = len(extractors) * len(pdf_paths)
-    print(f"\n{DIM}Running {len(extractors)} models × {len(pdf_paths)} PDFs = {n_total} extractions in parallel...{RESET}")
+    print(
+        f"\n{DIM}Running {len(extractors)} models × {len(pdf_paths)} PDFs = {n_total} extractions in parallel...{RESET}"
+    )
 
     # Fire ALL models × ALL PDFs in parallel
     pdf_tasks = [run_pdf(extractors, path) for path in pdf_paths]
@@ -329,7 +361,10 @@ def main():
     if args.model:
         matched = [m for m in MODELS if m[0] == args.model]
         if not matched:
-            print(f"Unknown model: {args.model}. Available: {', '.join(MODEL_NAMES)}", file=sys.stderr)
+            print(
+                f"Unknown model: {args.model}. Available: {', '.join(MODEL_NAMES)}",
+                file=sys.stderr,
+            )
             sys.exit(1)
         model_configs = matched
     else:
