@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { Sparkles } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import {
@@ -61,6 +62,10 @@ export function ComplianceSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [thresholds, setThresholds] = useState({ green: 85, yellow: 50 });
   const [savingThresholds, setSavingThresholds] = useState(false);
+  const navigate = useNavigate();
+  const [docTypeFilter, setDocTypeFilter] = useState("all_types");
+  const [groupBy, setGroupBy] = useState<"category" | "hierarchy" | "none">("category");
+  const [sortBy, setSortBy] = useState<"name" | "points">("name");
 
   useEffect(() => {
     document.title = "Regelefterlevnad — Njorda Advisor";
@@ -106,12 +111,58 @@ export function ComplianceSettingsPage() {
     }
   };
 
-  // Group rules by category
-  const grouped = CATEGORY_ORDER.map((cat) => ({
-    category: cat,
-    label: CATEGORY_LABELS[cat] || cat,
-    rules: rules.filter((r) => r.category === cat),
-  })).filter((g) => g.rules.length > 0);
+  const filteredRules =
+    docTypeFilter === "all_types"
+      ? rules
+      : rules.filter(
+          (r) =>
+            r.document_types?.includes("all") ||
+            r.document_types?.includes(docTypeFilter),
+        );
+
+  const sortFn = (a: ComplianceRuleConfig, b: ComplianceRuleConfig) =>
+    sortBy === "points"
+      ? b.max_deduction - a.max_deduction
+      : a.name.localeCompare(b.name, "sv");
+
+  const sortedRules = [...filteredRules].sort(sortFn);
+
+  // Build hierarchy: parent rules contain their children, standalone rules are top-level
+  const buildHierarchyGroups = () => {
+    const parents = sortedRules.filter(
+      (r) => !r.parent_rule_id && sortedRules.some((c) => c.parent_rule_id === r.rule_id),
+    );
+    const standalone = sortedRules.filter(
+      (r) => !r.parent_rule_id && !sortedRules.some((c) => c.parent_rule_id === r.rule_id),
+    );
+    const groups = parents.map((p) => ({
+      category: p.rule_id,
+      label: p.name,
+      parentRule: p,
+      rules: sortedRules.filter((r) => r.parent_rule_id === p.rule_id),
+    }));
+    if (standalone.length > 0) {
+      groups.push({
+        category: "_standalone",
+        label: "Fristående regler",
+        parentRule: null as ComplianceRuleConfig | null,
+        rules: standalone,
+      });
+    }
+    return groups;
+  };
+
+  const grouped =
+    groupBy === "category"
+      ? CATEGORY_ORDER.map((cat) => ({
+          category: cat,
+          label: CATEGORY_LABELS[cat] || cat,
+          parentRule: null as ComplianceRuleConfig | null,
+          rules: sortedRules.filter((r) => r.category === cat),
+        })).filter((g) => g.rules.length > 0)
+      : groupBy === "hierarchy"
+        ? buildHierarchyGroups()
+        : [{ category: "_all", label: "", parentRule: null as ComplianceRuleConfig | null, rules: sortedRules }];
 
   if (loading) {
     return (
@@ -188,27 +239,132 @@ export function ComplianceSettingsPage() {
           <CardHeader>
             <CardTitle>Regler</CardTitle>
             <CardDescription>
-              {rules.length} regler — {rules.filter((r) => r.enabled).length}{" "}
+              {filteredRules.length} regler — {filteredRules.filter((r) => r.enabled).length}{" "}
               aktiva
+              {docTypeFilter !== "all_types" && ` (filtrerat från ${rules.length})`}
             </CardDescription>
           </CardHeader>
+          <div className="px-6 pb-4 flex gap-4">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Dokumenttyp</Label>
+              <Select value={docTypeFilter} onValueChange={setDocTypeFilter}>
+                <SelectTrigger className="w-48 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_types">Alla dokumenttyper</SelectItem>
+                  {Object.entries(DOC_TYPE_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Gruppering</Label>
+              <Select value={groupBy} onValueChange={(v) => setGroupBy(v as "category" | "hierarchy" | "none")}>
+                <SelectTrigger className="w-44 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="category">Kategori</SelectItem>
+                  <SelectItem value="hierarchy">Hierarki</SelectItem>
+                  <SelectItem value="none">Ingen gruppering</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Sortering</Label>
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as "name" | "points")}>
+                <SelectTrigger className="w-36 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Namn</SelectItem>
+                  <SelectItem value="points">Poäng</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <CardContent>
             <div className="space-y-6">
-              {grouped.map(({ category, label, rules: categoryRules }) => (
+              {grouped.map(({ category, label, parentRule, rules: categoryRules }) => (
                 <div key={category}>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                    {label}
-                  </h3>
+                  {groupBy !== "none" && (
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                      {label}
+                      {groupBy === "hierarchy" && parentRule && (
+                        <span className="ml-2 font-normal text-xs">
+                          ({parentRule.rule_id} · {parentRule.max_deduction}p)
+                        </span>
+                      )}
+                    </h3>
+                  )}
                   <div className="rounded-lg border divide-y">
+                    {groupBy === "hierarchy" && parentRule && (
+                      <div
+                        className={`flex items-center gap-4 px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors ${!parentRule.enabled ? "opacity-50" : ""}`}
+                      >
+                        <div
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={() => navigate(`/settings/compliance/${parentRule.rule_id}`)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold hover:underline">
+                              {parentRule.name}
+                            </span>
+                            {parentRule.tier === 2 && (
+                              <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
+                                <Sparkles className="mr-0.5 size-2.5" />
+                                AI
+                              </Badge>
+                            )}
+                            <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                              Överordnad
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {(parentRule.document_types || [])
+                              .map((t) => DOC_TYPE_LABELS[t] || t)
+                              .join(", ")}
+                            {" · "}
+                            {parentRule.max_deduction}p
+                          </p>
+                        </div>
+                        <Select
+                          value={parentRule.severity_override || "default"}
+                          onValueChange={(v) => handleSeverityChange(parentRule.rule_id, v)}
+                        >
+                          <SelectTrigger className="w-40 h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="default">
+                              Standard ({parentRule.default_severity === "error" ? "Fel" : "Varning"})
+                            </SelectItem>
+                            <SelectItem value="error">Fel</SelectItem>
+                            <SelectItem value="warning">Varning</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Switch
+                          checked={parentRule.enabled}
+                          onCheckedChange={(checked) => handleToggle(parentRule.rule_id, checked)}
+                        />
+                      </div>
+                    )}
                     {categoryRules.map((rule) => (
                       <div
                         key={rule.rule_id}
-                        className={`flex items-center gap-4 px-4 py-3 ${!rule.enabled ? "opacity-50" : ""}`}
+                        className={`flex items-center gap-4 py-3 hover:bg-muted/50 transition-colors ${groupBy === "hierarchy" && parentRule ? "pl-8 pr-4" : "px-4"} ${!rule.enabled ? "opacity-50" : ""}`}
                       >
                         {/* Rule name + info */}
-                        <div className="flex-1 min-w-0">
+                        <div
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={() => navigate(`/settings/compliance/${rule.rule_id}`)}
+                        >
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">
+                            <span className="text-sm font-medium hover:underline">
                               {rule.name}
                             </span>
                             {rule.tier === 2 && (
@@ -220,7 +376,7 @@ export function ComplianceSettingsPage() {
                                 AI
                               </Badge>
                             )}
-                            {rule.parent_rule_id && (
+                            {rule.parent_rule_id && groupBy !== "hierarchy" && (
                               <span className="text-xs text-muted-foreground">
                                 ← {rule.parent_rule_id}
                               </span>

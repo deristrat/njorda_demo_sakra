@@ -71,7 +71,9 @@ export function AppSidebar() {
                 const isActive =
                   item.path === "/"
                     ? location.pathname === "/"
-                    : location.pathname.startsWith(item.path);
+                    : item.path === "/settings"
+                      ? location.pathname === "/settings"
+                      : location.pathname.startsWith(item.path);
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton

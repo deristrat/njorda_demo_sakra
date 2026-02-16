@@ -128,7 +128,13 @@ export async function fetchComplianceRules(): Promise<ComplianceRuleConfig[]> {
 
 export async function updateComplianceRule(
   ruleId: string,
-  update: { enabled?: boolean; severity_override?: string | null },
+  update: {
+    enabled?: boolean;
+    severity_override?: string | null;
+    name?: string;
+    remediation?: string | null;
+    max_deduction?: number;
+  },
 ): Promise<ComplianceRuleConfig> {
   const res = await fetch(`/api/compliance/rules/${ruleId}`, {
     method: "PUT",
