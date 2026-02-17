@@ -1,4 +1,8 @@
 import type {
+  Advisor,
+  AdvisorDetail,
+  Client,
+  ClientDetail,
   DocumentSummary,
   DocumentDetail,
   ProcessEvent,
@@ -10,12 +14,14 @@ const BASE = "/api/documents";
 
 export async function uploadDocuments(
   files: File[],
+  clientId?: number,
 ): Promise<{ documents: Array<{ id: number; filename: string; size: number; duplicate_warning: string | null }> }> {
   const form = new FormData();
   for (const file of files) {
     form.append("files", file);
   }
-  const res = await fetch(`${BASE}/upload`, { method: "POST", body: form });
+  const url = clientId != null ? `${BASE}/upload?client_id=${clientId}` : `${BASE}/upload`;
+  const res = await fetch(url, { method: "POST", body: form });
   if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
   return res.json();
 }
@@ -86,6 +92,46 @@ export async function fetchDocument(id: number): Promise<DocumentDetail> {
 
 export function getDocumentFileUrl(id: number): string {
   return `${BASE}/${id}/file`;
+}
+
+// --- Clients ---
+
+export async function fetchClients(): Promise<Client[]> {
+  const res = await fetch("/api/clients");
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchClient(id: number): Promise<ClientDetail> {
+  const res = await fetch(`/api/clients/${id}`);
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchClientDocuments(id: number): Promise<DocumentSummary[]> {
+  const res = await fetch(`/api/clients/${id}/documents`);
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return res.json();
+}
+
+// --- Advisors ---
+
+export async function fetchAdvisors(): Promise<Advisor[]> {
+  const res = await fetch("/api/advisors");
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchAdvisor(id: number): Promise<AdvisorDetail> {
+  const res = await fetch(`/api/advisors/${id}`);
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchAdvisorDocuments(id: number): Promise<DocumentSummary[]> {
+  const res = await fetch(`/api/advisors/${id}/documents`);
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return res.json();
 }
 
 // --- Settings ---

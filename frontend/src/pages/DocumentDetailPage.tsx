@@ -212,7 +212,18 @@ export function DocumentDetailPage() {
               <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
                 <div>
                   <dt className="text-xs text-muted-foreground">Namn</dt>
-                  <dd className="text-sm font-medium">{data.client.person_name || "—"}</dd>
+                  <dd className="text-sm font-medium">
+                    {doc.client_id ? (
+                      <a
+                        href={`/clients/${doc.client_id}`}
+                        className="text-primary hover:underline"
+                      >
+                        {data.client.person_name || "—"}
+                      </a>
+                    ) : (
+                      data.client.person_name || "—"
+                    )}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground">Personnummer</dt>
@@ -245,7 +256,18 @@ export function DocumentDetailPage() {
               <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
                 <div>
                   <dt className="text-xs text-muted-foreground">Namn</dt>
-                  <dd className="text-sm font-medium">{data.advisor.advisor_name || "—"}</dd>
+                  <dd className="text-sm font-medium">
+                    {doc.advisor_id ? (
+                      <a
+                        href={`/advisors/${doc.advisor_id}`}
+                        className="text-primary hover:underline"
+                      >
+                        {data.advisor.advisor_name || "—"}
+                      </a>
+                    ) : (
+                      data.advisor.advisor_name || "—"
+                    )}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground">Företag</dt>

@@ -1,4 +1,4 @@
-import type { Client } from "@/types";
+import type { MockClient as Client } from "@/types";
 
 export const clients: Client[] = [
   {

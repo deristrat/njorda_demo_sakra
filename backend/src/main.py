@@ -5,6 +5,7 @@ from src.routers import (
     health,
     dashboard,
     clients,
+    advisors,
     charts,
     documents,
     settings,
@@ -24,6 +25,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(dashboard.router)
 app.include_router(clients.router)
+app.include_router(advisors.router)
 app.include_router(charts.router)
 app.include_router(documents.router)
 app.include_router(settings.router)

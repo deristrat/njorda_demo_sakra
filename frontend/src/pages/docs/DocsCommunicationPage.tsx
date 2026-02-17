@@ -18,7 +18,7 @@ export function DocsCommunicationPage() {
         </DocsProse>
 
         <div className="max-w-3xl my-6">
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="text-sm">
             Kommande funktion
           </Badge>
         </div>

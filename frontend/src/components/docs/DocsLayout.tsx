@@ -6,7 +6,7 @@ export function DocsLayout() {
   return (
     <SidebarProvider>
       <DocsSidebar />
-      <SidebarInset>
+      <SidebarInset className="font-docs">
         <Outlet />
       </SidebarInset>
     </SidebarProvider>

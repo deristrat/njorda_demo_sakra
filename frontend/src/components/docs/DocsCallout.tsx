@@ -47,11 +47,11 @@ export function DocsCallout({ variant, title, children }: DocsCalloutProps) {
         <Icon className={cn("size-5 shrink-0 mt-0.5", config.iconColor)} />
         <div className="min-w-0">
           {title && (
-            <p className={cn("text-sm font-medium mb-1", config.titleColor)}>
+            <p className={cn("text-base font-medium mb-1", config.titleColor)}>
               {title}
             </p>
           )}
-          <div className="text-sm text-muted-foreground leading-relaxed [&>p]:mb-2 [&>p:last-child]:mb-0">
+          <div className="text-[15px] text-foreground/70 leading-relaxed [&>p]:mb-2 [&>p:last-child]:mb-0">
             {children}
           </div>
         </div>

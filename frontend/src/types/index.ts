@@ -7,6 +7,29 @@ export interface KPI {
 }
 
 export interface Client {
+  id: number;
+  person_number: string;
+  person_name: string | null;
+  email: string | null;
+  phone: string | null;
+  document_count: number;
+  compliance_issues: number;
+  latest_document_date: string | null;
+}
+
+export interface ClientDetail {
+  id: number;
+  person_number: string;
+  person_name: string | null;
+  address: string | null;
+  email: string | null;
+  phone: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Legacy mock client type for example pages
+export interface MockClient {
   id: string;
   name: string;
   email: string;
@@ -42,11 +65,34 @@ export interface MeetingsWeek {
 
 // Document types
 
+export interface Advisor {
+  id: number;
+  advisor_name: string;
+  firm_name: string | null;
+  license_number: string | null;
+  document_count: number;
+  client_count: number;
+  avg_compliance_score: number | null;
+  clients_with_issues: number;
+  latest_document_date: string | null;
+}
+
+export interface AdvisorDetail {
+  id: number;
+  advisor_name: string;
+  firm_name: string | null;
+  license_number: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DocumentSummary {
   id: number;
   original_filename: string;
   file_size: number;
   status: string;
+  client_id: number | null;
+  advisor_id: number | null;
   created_at: string;
   document_type: string | null;
   document_date: string | null;
@@ -78,6 +124,8 @@ export interface DocumentDetail {
   file_size: number;
   mime_type: string;
   status: string;
+  client_id: number | null;
+  advisor_id: number | null;
   created_at: string;
   extractions: ExtractionSummary[];
 }
@@ -127,6 +175,8 @@ export interface ProcessEvent {
   message?: string;
   document_type?: string;
   client_name?: string;
+  client_id?: number;
+  advisor_id?: number;
   compliance_status?: string;
   compliance_score?: number;
 }

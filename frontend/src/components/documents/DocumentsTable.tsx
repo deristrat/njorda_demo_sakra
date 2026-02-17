@@ -25,7 +25,18 @@ import { fetchDocuments, deleteDocuments, bulkRecheckCompliance } from "@/lib/ap
 import { documentColumns } from "./documentColumns";
 import type { DocumentSummary } from "@/types";
 
-export function DocumentsTable() {
+interface DocumentsTableProps {
+  externalData?: DocumentSummary[];
+  externalLoading?: boolean;
+  onRefresh?: () => void;
+}
+
+export function DocumentsTable({
+  externalData,
+  externalLoading,
+  onRefresh,
+}: DocumentsTableProps = {}) {
+  const isExternal = externalData !== undefined;
   const navigate = useNavigate();
   const [data, setData] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,11 +46,16 @@ export function DocumentsTable() {
   const [actionLoading, setActionLoading] = useState<"delete" | "recheck" | null>(null);
 
   useEffect(() => {
+    if (isExternal) {
+      setData(externalData ?? []);
+      setLoading(externalLoading ?? false);
+      return;
+    }
     fetchDocuments()
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [isExternal, externalData, externalLoading]);
 
   const table = useReactTable({
     data,
@@ -62,7 +78,11 @@ export function DocumentsTable() {
     setActionLoading("delete");
     try {
       await deleteDocuments(selectedIds);
-      setData((prev) => prev.filter((d) => !selectedIds.includes(d.id)));
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        setData((prev) => prev.filter((d) => !selectedIds.includes(d.id)));
+      }
       setRowSelection({});
     } catch (err) {
       console.error("Delete failed:", err);
@@ -76,9 +96,12 @@ export function DocumentsTable() {
     setActionLoading("recheck");
     try {
       await bulkRecheckCompliance(selectedIds);
-      // Refresh data to get updated compliance scores
-      const updated = await fetchDocuments();
-      setData(updated);
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        const updated = await fetchDocuments();
+        setData(updated);
+      }
       setRowSelection({});
     } catch (err) {
       console.error("Recheck failed:", err);

@@ -9,6 +9,10 @@ import { DocumentsPage } from "@/pages/DocumentsPage";
 import { DocumentDetailPage } from "@/pages/DocumentDetailPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ClientsPage } from "@/pages/ClientsPage";
+import { ClientsListPage } from "@/pages/ClientsListPage";
+import { ClientDetailPage } from "@/pages/ClientDetailPage";
+import { AdvisorsListPage } from "@/pages/AdvisorsListPage";
+import { AdvisorDetailPage } from "@/pages/AdvisorDetailPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { FontSettingsPage } from "@/pages/FontSettingsPage";
 import { ComplianceSettingsPage } from "@/pages/ComplianceSettingsPage";
@@ -34,6 +38,10 @@ export default function App() {
             <Route path="/" element={<UploadPage />} />
             <Route path="/documents" element={<DocumentsPage />} />
             <Route path="/documents/:id" element={<DocumentDetailPage />} />
+            <Route path="/clients" element={<ClientsListPage />} />
+            <Route path="/clients/:id" element={<ClientDetailPage />} />
+            <Route path="/advisors" element={<AdvisorsListPage />} />
+            <Route path="/advisors/:id" element={<AdvisorDetailPage />} />
             <Route path="/settings" element={<FontSettingsPage />} />
             <Route path="/settings/compliance" element={<ComplianceSettingsPage />} />
             <Route path="/settings/compliance/:ruleId" element={<ComplianceRuleDetailPage />} />

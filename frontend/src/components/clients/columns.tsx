@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatDate } from "@/lib/utils";
-import type { Client } from "@/types";
+import type { MockClient as Client } from "@/types";
 
 export const columns: ColumnDef<Client>[] = [
   {

@@ -5,6 +5,7 @@ import {
   FileText,
   LayoutDashboard,
   Users,
+  Briefcase,
   Settings,
   ShieldCheck,
   LogOut,
@@ -41,6 +42,8 @@ import { NjordaLogo } from "./NjordaLogo";
 const mainNav = [
   { label: "Ladda upp", icon: Upload, path: "/" },
   { label: "Dokument", icon: FileText, path: "/documents" },
+  { label: "Klienter", icon: Users, path: "/clients" },
+  { label: "Rådgivare", icon: Briefcase, path: "/advisors" },
   { label: "Regelefterlevnad", icon: ShieldCheck, path: "/settings/compliance" },
   { label: "Inställningar", icon: Settings, path: "/settings" },
 ];

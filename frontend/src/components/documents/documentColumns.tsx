@@ -96,7 +96,23 @@ export const documentColumns: ColumnDef<DocumentSummary>[] = [
         <ArrowUpDown className="ml-1 size-3" />
       </Button>
     ),
-    cell: ({ row }) => row.getValue("client_name") || <span className="text-muted-foreground">—</span>,
+    cell: ({ row }) => {
+      const clientName = row.getValue("client_name") as string | null;
+      const clientId = row.original.client_id;
+      if (!clientName) return <span className="text-muted-foreground">Ej kopplad</span>;
+      if (clientId) {
+        return (
+          <a
+            href={`/clients/${clientId}`}
+            className="text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {clientName}
+          </a>
+        );
+      }
+      return clientName;
+    },
   },
   {
     accessorKey: "advisor_name",
@@ -110,7 +126,23 @@ export const documentColumns: ColumnDef<DocumentSummary>[] = [
         <ArrowUpDown className="ml-1 size-3" />
       </Button>
     ),
-    cell: ({ row }) => row.getValue("advisor_name") || <span className="text-muted-foreground">—</span>,
+    cell: ({ row }) => {
+      const advisorName = row.getValue("advisor_name") as string | null;
+      const advisorId = row.original.advisor_id;
+      if (!advisorName) return <span className="text-muted-foreground">—</span>;
+      if (advisorId) {
+        return (
+          <a
+            href={`/advisors/${advisorId}`}
+            className="text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {advisorName}
+          </a>
+        );
+      }
+      return advisorName;
+    },
   },
   {
     accessorKey: "document_date",

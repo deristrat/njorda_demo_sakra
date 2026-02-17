@@ -80,10 +80,10 @@ export function DocsScoringPage() {
         </DocsProse>
 
         <div className="max-w-3xl my-4 rounded-lg border bg-muted/50 p-4">
-          <code className="font-brand text-sm">
+          <code className="font-brand text-base">
             poäng = 100 − summa(avdrag för underkända regler)
           </code>
-          <p className="text-xs text-muted-foreground mt-2">
+          <p className="text-sm text-foreground/60 mt-2">
             Lägsta möjliga poäng är 0. Poängen kan aldrig bli negativ.
           </p>
         </div>
@@ -101,12 +101,12 @@ export function DocsScoringPage() {
             <div className="w-2 bg-green-500 rounded-tl-lg" />
             <div className="flex-1 border border-l-0 rounded-tr-lg p-4">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-medium">Grön</span>
-                <Badge variant="outline" className="text-xs">
+                <span className="text-base font-medium">Grön</span>
+                <Badge variant="outline" className="text-sm">
                   ≥ 85 poäng
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-foreground/60">
                 Dokumentet uppfyller regelkraven. Inga eller minimala avvikelser.
               </p>
             </div>
@@ -115,12 +115,12 @@ export function DocsScoringPage() {
             <div className="w-2 bg-yellow-500" />
             <div className="flex-1 border border-t-0 border-l-0 p-4">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-medium">Gul</span>
-                <Badge variant="outline" className="text-xs">
+                <span className="text-base font-medium">Gul</span>
+                <Badge variant="outline" className="text-sm">
                   50–84 poäng
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-foreground/60">
                 Dokumentet behöver uppmärksamhet. Vissa brister identifierade som
                 bör åtgärdas.
               </p>
@@ -130,12 +130,12 @@ export function DocsScoringPage() {
             <div className="w-2 bg-red-500 rounded-bl-lg" />
             <div className="flex-1 border border-t-0 border-l-0 rounded-br-lg p-4">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-medium">Röd</span>
-                <Badge variant="outline" className="text-xs">
+                <span className="text-base font-medium">Röd</span>
+                <Badge variant="outline" className="text-sm">
                   &lt; 50 poäng
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-foreground/60">
                 Dokumentet har betydande brister som kräver omedelbar åtgärd.
               </p>
             </div>
@@ -178,14 +178,14 @@ export function DocsScoringPage() {
             <TableBody>
               {categoryDeductions.map((row) => (
                 <TableRow key={row.category}>
-                  <TableCell className="font-medium text-xs">
+                  <TableCell className="font-medium text-sm">
                     {row.category}
                   </TableCell>
-                  <TableCell className="text-xs font-brand">
+                  <TableCell className="text-sm font-brand">
                     {row.rules}
                   </TableCell>
-                  <TableCell className="text-xs">{row.deductions}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className="text-sm">{row.deductions}</TableCell>
+                  <TableCell className="text-sm text-foreground/60">
                     {row.examples}
                   </TableCell>
                 </TableRow>
@@ -208,10 +208,10 @@ export function DocsScoringPage() {
             <div>
               <div className="flex items-center gap-2">
                 <div className="size-2 rounded-full bg-primary" />
-                <span className="text-sm font-medium">
+                <span className="text-base font-medium">
                   KYC_000 — Lämplighetsbedömning saknas
                 </span>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-sm">
                   Förälder
                 </Badge>
               </div>
@@ -225,8 +225,8 @@ export function DocsScoringPage() {
                   "KYC_006 — Placeringsmål",
                 ].map((child) => (
                   <div key={child} className="flex items-center gap-2">
-                    <div className="size-1.5 rounded-full bg-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">
+                    <div className="size-1.5 rounded-full bg-foreground/40" />
+                    <span className="text-sm text-foreground/70">
                       {child}
                     </span>
                   </div>
@@ -234,7 +234,7 @@ export function DocsScoringPage() {
               </div>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">
+          <p className="text-sm text-foreground/60 mt-3 pt-3 border-t">
             Om KYC_000 underkänns (ingen lämplighetsbedömning funnen) markeras
             alla sex barnregler som "överhoppade" utan ytterligare avdrag.
           </p>
@@ -251,13 +251,13 @@ export function DocsScoringPage() {
           <div className="rounded-lg border p-4">
             <div className="flex items-center gap-2 mb-2">
               <Badge className="bg-primary">Tier 1</Badge>
-              <span className="text-sm font-medium">Standard</span>
+              <span className="text-base font-medium">Standard</span>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-foreground/70">
               Deterministiska kontroller som verifierar att specifika fält finns
               och är ifyllda. Snabba och förutsägbara.
             </p>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-sm text-foreground/70 mt-2">
               Exempel: kontrollerar att rådgivarens namn, riskprofil eller
               rekommendationer finns i dokumentet.
             </p>
@@ -265,13 +265,13 @@ export function DocsScoringPage() {
           <div className="rounded-lg border p-4">
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="secondary">Tier 2</Badge>
-              <span className="text-sm font-medium">AI-baserad</span>
+              <span className="text-base font-medium">AI-baserad</span>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-foreground/70">
               LLM-baserad utvärdering som analyserar kvalitet och sammanhang,
               inte bara förekomst. Mer nyanserad bedömning.
             </p>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-sm text-foreground/70 mt-2">
               Exempel: bedömer om lämplighetsbedömningen är specifik för
               klienten eller generiskt formulerad.
             </p>
@@ -289,8 +289,8 @@ export function DocsScoringPage() {
           <div className="flex items-center gap-3 rounded-lg border p-3">
             <Badge className="bg-green-600 w-24 justify-center">Godkänd</Badge>
             <div>
-              <span className="text-sm">0 poängs avdrag</span>
-              <p className="text-xs text-muted-foreground">
+              <span className="text-base">0 poängs avdrag</span>
+              <p className="text-sm text-foreground/60">
                 Regeln är uppfylld
               </p>
             </div>
@@ -298,8 +298,8 @@ export function DocsScoringPage() {
           <div className="flex items-center gap-3 rounded-lg border p-3">
             <Badge className="bg-red-600 w-24 justify-center">Underkänd</Badge>
             <div>
-              <span className="text-sm">Poängavdrag tillämpas</span>
-              <p className="text-xs text-muted-foreground">
+              <span className="text-base">Poängavdrag tillämpas</span>
+              <p className="text-sm text-foreground/60">
                 Regeln uppfylldes inte — avdrag baserat på regelns max_deduction
               </p>
             </div>
@@ -309,8 +309,8 @@ export function DocsScoringPage() {
               Överhoppad
             </Badge>
             <div>
-              <span className="text-sm">0 poängs avdrag</span>
-              <p className="text-xs text-muted-foreground">
+              <span className="text-base">0 poängs avdrag</span>
+              <p className="text-sm text-foreground/60">
                 Överordnad regel underkänd — denna regel utvärderas inte
               </p>
             </div>
@@ -327,35 +327,35 @@ export function DocsScoringPage() {
 
         <div className="max-w-3xl my-4 rounded-lg border overflow-hidden">
           <div className="bg-muted/50 p-4 border-b">
-            <p className="text-sm font-medium">Scenario</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-base font-medium">Scenario</p>
+        <p className="text-sm text-foreground/60 mt-1">
               Ett rådgivningsdokument saknar rådgivarens namn och klientens
               riskprofil.
             </p>
           </div>
           <div className="p-4 space-y-3">
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-base">
               <span>Startpoäng</span>
               <span className="font-brand">100</span>
             </div>
-            <div className="flex items-center justify-between text-sm text-red-600">
+            <div className="flex items-center justify-between text-base text-red-600">
               <span>META_001 — Rådgivarens namn saknas</span>
               <span className="font-brand">−12</span>
             </div>
-            <div className="flex items-center justify-between text-sm text-red-600">
+            <div className="flex items-center justify-between text-base text-red-600">
               <span>KYC_002 — Riskprofil saknas</span>
               <span className="font-brand">−10</span>
             </div>
-            <div className="border-t pt-3 flex items-center justify-between text-sm font-medium">
+            <div className="border-t pt-3 flex items-center justify-between text-base font-medium">
               <span>Slutpoäng</span>
               <div className="flex items-center gap-2">
-                <span className="font-brand text-base">78</span>
+                <span className="font-brand text-lg">78</span>
                 <div className="size-3 rounded-full bg-yellow-500" />
               </div>
             </div>
           </div>
           <div className="bg-yellow-50 border-t border-yellow-200 p-3">
-            <p className="text-xs text-yellow-800">
+            <p className="text-sm text-yellow-800">
               78 poäng = <strong>Gul</strong> — dokumentet behöver
               uppmärksamhet
             </p>

@@ -87,10 +87,10 @@ export function DocsRulesPage() {
 
         <div className="max-w-3xl my-4 space-y-4">
           <div className="rounded-lg border p-4">
-            <p className="text-sm font-medium mb-2">KYC-hierarki</p>
+            <p className="text-base font-medium mb-2">KYC-hierarki</p>
             <div className="flex items-center gap-2 mb-2">
-              <Badge className="bg-primary text-xs">KYC_000</Badge>
-              <span className="text-xs text-muted-foreground">
+              <Badge className="bg-primary text-sm">KYC_000</Badge>
+              <span className="text-sm text-foreground/70">
                 Lämplighetsbedömning saknas (15p)
               </span>
             </div>
@@ -103,12 +103,12 @@ export function DocsRulesPage() {
                 ["KYC_005", "Förlusttolerans", "8p"],
                 ["KYC_006", "Placeringsmål", "4p"],
               ].map(([id, name, deduction]) => (
-                <div key={id} className="flex items-center gap-2 text-xs">
-                  <span className="font-brand text-muted-foreground w-16">
+                <div key={id} className="flex items-center gap-2 text-sm">
+                  <span className="font-brand text-foreground/60 w-16">
                     {id}
                   </span>
-                  <span className="text-muted-foreground">{name}</span>
-                  <span className="ml-auto text-muted-foreground">
+                  <span className="text-foreground/70">{name}</span>
+                  <span className="ml-auto text-foreground/60">
                     {deduction}
                   </span>
                 </div>
@@ -117,12 +117,12 @@ export function DocsRulesPage() {
           </div>
 
           <div className="rounded-lg border p-4">
-            <p className="text-sm font-medium mb-2">
+            <p className="text-base font-medium mb-2">
               Rekommendationshierarki
             </p>
             <div className="flex items-center gap-2 mb-2">
-              <Badge className="bg-primary text-xs">REC_001</Badge>
-              <span className="text-xs text-muted-foreground">
+              <Badge className="bg-primary text-sm">REC_001</Badge>
+              <span className="text-sm text-foreground/70">
                 Inga rekommendationer (12p)
               </span>
             </div>
@@ -131,12 +131,12 @@ export function DocsRulesPage() {
                 ["REC_002", "Motivering saknas", "4p"],
                 ["REC_003", "Riskmatchning", "12p"],
               ].map(([id, name, deduction]) => (
-                <div key={id} className="flex items-center gap-2 text-xs">
-                  <span className="font-brand text-muted-foreground w-16">
+                <div key={id} className="flex items-center gap-2 text-sm">
+                  <span className="font-brand text-foreground/60 w-16">
                     {id}
                   </span>
-                  <span className="text-muted-foreground">{name}</span>
-                  <span className="ml-auto text-muted-foreground">
+                  <span className="text-foreground/70">{name}</span>
+                  <span className="ml-auto text-foreground/60">
                     {deduction}
                   </span>
                 </div>

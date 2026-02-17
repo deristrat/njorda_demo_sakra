@@ -50,7 +50,7 @@ export function DocsHomePage() {
           </p>
         </DocsProse>
 
-        <h3 className="font-brand text-base tracking-tight mt-8 mb-4">
+        <h3 className="font-brand text-lg tracking-tight mt-8 mb-4">
           Tre huvudområden
         </h3>
         <div className="grid gap-4 sm:grid-cols-3 max-w-3xl">
@@ -62,10 +62,10 @@ export function DocsHomePage() {
             >
               <CardHeader>
                 <feature.icon className="size-8 text-primary mb-2" />
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-base font-medium">
                   {feature.title}
                 </CardTitle>
-                <CardDescription className="text-xs">
+                <CardDescription className="text-sm">
                   {feature.description}
                 </CardDescription>
               </CardHeader>

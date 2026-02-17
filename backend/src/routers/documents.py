@@ -7,7 +7,7 @@ import hashlib
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, joinedload
@@ -17,6 +17,8 @@ from src.database import get_db
 from src.extraction.base import ExtractionError
 from src.extraction.cli import MODELS, make_extractor
 from src.models.app_settings import get_setting
+from src.models.advisor import link_document_to_advisor
+from src.models.client import Client, link_document_to_client
 from src.models.document import Document, DocumentExtraction
 from src.routers.compliance import run_compliance_for_document
 
@@ -26,6 +28,7 @@ router = APIRouter(prefix="/api/documents", tags=["documents"])
 @router.post("/upload")
 async def upload_documents(
     files: list[UploadFile],
+    client_id: int | None = Query(None),
     db: Session = Depends(get_db),
 ):
     settings.upload_dir.mkdir(parents=True, exist_ok=True)
@@ -58,6 +61,13 @@ async def upload_documents(
             mime_type=file.content_type or "application/pdf",
             status="uploaded",
         )
+        # Pre-link to client if uploading from a client page
+        if client_id is not None:
+            existing_client = db.execute(
+                select(Client).where(Client.id == client_id)
+            ).scalar_one_or_none()
+            if existing_client:
+                doc.client_id = client_id
         db.add(doc)
         db.flush()
 
@@ -128,6 +138,11 @@ async def process_documents(
                     result.advisor.advisor_name if result.advisor else None
                 )
                 doc.status = "completed"
+
+                # Auto-link document to client/advisor based on extraction
+                link_document_to_client(doc, result, db)
+                link_document_to_advisor(doc, result, db)
+
                 db.commit()
 
                 # Run compliance checks (Tier 1 only — fast)
@@ -143,6 +158,8 @@ async def process_documents(
                         "message": "Klar",
                         "document_type": extraction.document_type,
                         "client_name": extraction.client_name,
+                        "client_id": doc.client_id,
+                        "advisor_id": doc.advisor_id,
                         "compliance_status": doc.compliance_status,
                         "compliance_score": doc.compliance_score,
                     }
@@ -271,6 +288,8 @@ def get_document(document_id: int, db: Session = Depends(get_db)):
         "file_size": doc.file_size,
         "mime_type": doc.mime_type,
         "status": doc.status,
+        "client_id": doc.client_id,
+        "advisor_id": doc.advisor_id,
         "created_at": doc.created_at.isoformat(),
         "extractions": [
             {
@@ -329,6 +348,8 @@ def _doc_summary(doc: Document) -> dict:
         "original_filename": doc.original_filename,
         "file_size": doc.file_size,
         "status": doc.status,
+        "client_id": doc.client_id,
+        "advisor_id": doc.advisor_id,
         "created_at": doc.created_at.isoformat(),
         "document_type": latest.document_type if latest else None,
         "document_date": latest.document_date if latest else None,

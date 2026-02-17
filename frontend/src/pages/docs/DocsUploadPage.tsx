@@ -67,33 +67,33 @@ export function DocsUploadPage() {
         </DocsProse>
 
         <div className="max-w-3xl space-y-2 my-4">
-          <div className="flex items-center gap-3 text-sm">
-            <Badge variant="outline" className="w-28 justify-center">
+          <div className="flex items-center gap-3 text-base">
+            <Badge variant="outline" className="w-28 justify-center text-sm">
               Laddar upp
             </Badge>
-            <span className="text-muted-foreground">
+            <span className="text-foreground/70">
               Filen överförs till servern
             </span>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <Badge variant="outline" className="w-28 justify-center">
+          <div className="flex items-center gap-3 text-base">
+            <Badge variant="outline" className="w-28 justify-center text-sm">
               Bearbetar
             </Badge>
-            <span className="text-muted-foreground">
+            <span className="text-foreground/70">
               Text och metadata extraheras
             </span>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <Badge variant="outline" className="w-28 justify-center">
+          <div className="flex items-center gap-3 text-base">
+            <Badge variant="outline" className="w-28 justify-center text-sm">
               Granskar
             </Badge>
-            <span className="text-muted-foreground">
+            <span className="text-foreground/70">
               Regelefterlevnad utvärderas
             </span>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <Badge className="w-28 justify-center bg-primary">Klar</Badge>
-            <span className="text-muted-foreground">
+          <div className="flex items-center gap-3 text-base">
+            <Badge className="w-28 justify-center bg-primary text-sm">Klar</Badge>
+            <span className="text-foreground/70">
               Granskning slutförd — poäng tillgänglig
             </span>
           </div>

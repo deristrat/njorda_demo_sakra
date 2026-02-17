@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, func, select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -18,6 +18,12 @@ class Document(Base):
     mime_type: Mapped[str] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(String(20), default="uploaded")
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    client_id: Mapped[int | None] = mapped_column(
+        ForeignKey("clients.id"), nullable=True, index=True
+    )
+    advisor_id: Mapped[int | None] = mapped_column(
+        ForeignKey("advisors.id"), nullable=True, index=True
+    )
 
     # Denormalized compliance fields
     compliance_status: Mapped[str | None] = mapped_column(String(10), nullable=True)
@@ -31,6 +37,8 @@ class Document(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    client: Mapped["Client | None"] = relationship(back_populates="documents")
+    advisor: Mapped["Advisor | None"] = relationship(back_populates="documents")
     extractions: Mapped[list["DocumentExtraction"]] = relationship(
         back_populates="document", cascade="all, delete-orphan"
     )
