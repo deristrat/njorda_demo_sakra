@@ -31,7 +31,7 @@ export function DocsConfigPage() {
             <div className="grid grid-cols-3 text-center">
               <div className="p-3 bg-red-50 border-r">
                 <p className="font-medium text-red-800">Röd</p>
-                <p className="text-sm text-red-600 mt-0.5">
+                <p className="text-sm text-red-700 mt-0.5">
                   &lt; nedre tröskelvärde
                 </p>
               </div>
@@ -43,13 +43,13 @@ export function DocsConfigPage() {
               </div>
               <div className="p-3 bg-green-50">
                 <p className="font-medium text-green-800">Grön</p>
-                <p className="text-sm text-green-600 mt-0.5">
+                <p className="text-sm text-green-700 mt-0.5">
                   ≥ övre tröskelvärde
                 </p>
               </div>
             </div>
             <div className="p-3 border-t bg-muted/30 text-center">
-              <p className="text-sm text-foreground/60">
+              <p className="text-sm text-foreground">
                 Standardvärden: Röd &lt; <strong>50</strong> | Gul 50–
                 <strong>84</strong> | Grön ≥ <strong>85</strong>
               </p>
@@ -105,7 +105,7 @@ export function DocsConfigPage() {
               <Badge variant="secondary" className="text-sm">
                 Inaktiv
               </Badge>
-              <span className="text-foreground/70">
+              <span className="text-foreground">
                 ESG_001 — Hållbarhetspreferenser
               </span>
             </div>
@@ -113,7 +113,7 @@ export function DocsConfigPage() {
               <Badge variant="secondary" className="text-sm">
                 Inaktiv
               </Badge>
-              <span className="text-foreground/70">
+              <span className="text-foreground">
                 COST_001 — Ersättningsinformation
               </span>
             </div>
@@ -121,7 +121,7 @@ export function DocsConfigPage() {
               <Badge variant="secondary" className="text-sm">
                 Inaktiv
               </Badge>
-              <span className="text-foreground/70">
+              <span className="text-foreground">
                 COST_002 — Belopp i SEK
               </span>
             </div>

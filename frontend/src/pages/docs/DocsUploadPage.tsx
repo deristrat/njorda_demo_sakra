@@ -71,7 +71,7 @@ export function DocsUploadPage() {
             <Badge variant="outline" className="w-28 justify-center text-sm">
               Laddar upp
             </Badge>
-            <span className="text-foreground/70">
+            <span className="text-foreground">
               Filen överförs till servern
             </span>
           </div>
@@ -79,7 +79,7 @@ export function DocsUploadPage() {
             <Badge variant="outline" className="w-28 justify-center text-sm">
               Bearbetar
             </Badge>
-            <span className="text-foreground/70">
+            <span className="text-foreground">
               Text och metadata extraheras
             </span>
           </div>
@@ -87,13 +87,13 @@ export function DocsUploadPage() {
             <Badge variant="outline" className="w-28 justify-center text-sm">
               Granskar
             </Badge>
-            <span className="text-foreground/70">
+            <span className="text-foreground">
               Regelefterlevnad utvärderas
             </span>
           </div>
           <div className="flex items-center gap-3 text-base">
             <Badge className="w-28 justify-center bg-primary text-sm">Klar</Badge>
-            <span className="text-foreground/70">
+            <span className="text-foreground">
               Granskning slutförd — poäng tillgänglig
             </span>
           </div>

@@ -83,7 +83,7 @@ export function DocsScoringPage() {
           <code className="font-brand text-base">
             poäng = 100 − summa(avdrag för underkända regler)
           </code>
-          <p className="text-sm text-foreground/60 mt-2">
+          <p className="text-sm text-foreground mt-2">
             Lägsta möjliga poäng är 0. Poängen kan aldrig bli negativ.
           </p>
         </div>
@@ -106,7 +106,7 @@ export function DocsScoringPage() {
                   ≥ 85 poäng
                 </Badge>
               </div>
-              <p className="text-sm text-foreground/60">
+              <p className="text-sm text-foreground">
                 Dokumentet uppfyller regelkraven. Inga eller minimala avvikelser.
               </p>
             </div>
@@ -120,7 +120,7 @@ export function DocsScoringPage() {
                   50–84 poäng
                 </Badge>
               </div>
-              <p className="text-sm text-foreground/60">
+              <p className="text-sm text-foreground">
                 Dokumentet behöver uppmärksamhet. Vissa brister identifierade som
                 bör åtgärdas.
               </p>
@@ -135,7 +135,7 @@ export function DocsScoringPage() {
                   &lt; 50 poäng
                 </Badge>
               </div>
-              <p className="text-sm text-foreground/60">
+              <p className="text-sm text-foreground">
                 Dokumentet har betydande brister som kräver omedelbar åtgärd.
               </p>
             </div>
@@ -185,7 +185,7 @@ export function DocsScoringPage() {
                     {row.rules}
                   </TableCell>
                   <TableCell className="text-sm">{row.deductions}</TableCell>
-                  <TableCell className="text-sm text-foreground/60">
+                  <TableCell className="text-sm">
                     {row.examples}
                   </TableCell>
                 </TableRow>
@@ -225,8 +225,8 @@ export function DocsScoringPage() {
                   "KYC_006 — Placeringsmål",
                 ].map((child) => (
                   <div key={child} className="flex items-center gap-2">
-                    <div className="size-1.5 rounded-full bg-foreground/40" />
-                    <span className="text-sm text-foreground/70">
+                    <div className="size-1.5 rounded-full bg-muted-foreground" />
+                    <span className="text-sm text-foreground">
                       {child}
                     </span>
                   </div>
@@ -234,7 +234,7 @@ export function DocsScoringPage() {
               </div>
             </div>
           </div>
-          <p className="text-sm text-foreground/60 mt-3 pt-3 border-t">
+          <p className="text-sm text-foreground mt-3 pt-3 border-t">
             Om KYC_000 underkänns (ingen lämplighetsbedömning funnen) markeras
             alla sex barnregler som "överhoppade" utan ytterligare avdrag.
           </p>
@@ -253,11 +253,11 @@ export function DocsScoringPage() {
               <Badge className="bg-primary">Tier 1</Badge>
               <span className="text-base font-medium">Standard</span>
             </div>
-            <p className="text-sm text-foreground/70">
+            <p className="text-sm text-foreground leading-relaxed">
               Deterministiska kontroller som verifierar att specifika fält finns
               och är ifyllda. Snabba och förutsägbara.
             </p>
-            <p className="text-sm text-foreground/70 mt-2">
+            <p className="text-sm text-foreground leading-relaxed mt-2">
               Exempel: kontrollerar att rådgivarens namn, riskprofil eller
               rekommendationer finns i dokumentet.
             </p>
@@ -267,11 +267,11 @@ export function DocsScoringPage() {
               <Badge variant="secondary">Tier 2</Badge>
               <span className="text-base font-medium">AI-baserad</span>
             </div>
-            <p className="text-sm text-foreground/70">
+            <p className="text-sm text-foreground leading-relaxed">
               LLM-baserad utvärdering som analyserar kvalitet och sammanhang,
               inte bara förekomst. Mer nyanserad bedömning.
             </p>
-            <p className="text-sm text-foreground/70 mt-2">
+            <p className="text-sm text-foreground leading-relaxed mt-2">
               Exempel: bedömer om lämplighetsbedömningen är specifik för
               klienten eller generiskt formulerad.
             </p>
@@ -290,7 +290,7 @@ export function DocsScoringPage() {
             <Badge className="bg-green-600 w-24 justify-center">Godkänd</Badge>
             <div>
               <span className="text-base">0 poängs avdrag</span>
-              <p className="text-sm text-foreground/60">
+              <p className="text-sm text-foreground">
                 Regeln är uppfylld
               </p>
             </div>
@@ -299,7 +299,7 @@ export function DocsScoringPage() {
             <Badge className="bg-red-600 w-24 justify-center">Underkänd</Badge>
             <div>
               <span className="text-base">Poängavdrag tillämpas</span>
-              <p className="text-sm text-foreground/60">
+              <p className="text-sm text-foreground">
                 Regeln uppfylldes inte — avdrag baserat på regelns max_deduction
               </p>
             </div>
@@ -310,7 +310,7 @@ export function DocsScoringPage() {
             </Badge>
             <div>
               <span className="text-base">0 poängs avdrag</span>
-              <p className="text-sm text-foreground/60">
+              <p className="text-sm text-foreground">
                 Överordnad regel underkänd — denna regel utvärderas inte
               </p>
             </div>
@@ -328,7 +328,7 @@ export function DocsScoringPage() {
         <div className="max-w-3xl my-4 rounded-lg border overflow-hidden">
           <div className="bg-muted/50 p-4 border-b">
             <p className="text-base font-medium">Scenario</p>
-        <p className="text-sm text-foreground/60 mt-1">
+            <p className="text-sm text-foreground mt-1">
               Ett rådgivningsdokument saknar rådgivarens namn och klientens
               riskprofil.
             </p>

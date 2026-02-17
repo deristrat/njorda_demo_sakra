@@ -90,7 +90,7 @@ export function DocsRulesPage() {
             <p className="text-base font-medium mb-2">KYC-hierarki</p>
             <div className="flex items-center gap-2 mb-2">
               <Badge className="bg-primary text-sm">KYC_000</Badge>
-              <span className="text-sm text-foreground/70">
+              <span className="text-sm text-foreground">
                 Lämplighetsbedömning saknas (15p)
               </span>
             </div>
@@ -104,11 +104,11 @@ export function DocsRulesPage() {
                 ["KYC_006", "Placeringsmål", "4p"],
               ].map(([id, name, deduction]) => (
                 <div key={id} className="flex items-center gap-2 text-sm">
-                  <span className="font-brand text-foreground/60 w-16">
+                  <span className="font-brand text-muted-foreground w-16">
                     {id}
                   </span>
-                  <span className="text-foreground/70">{name}</span>
-                  <span className="ml-auto text-foreground/60">
+                  <span className="text-foreground">{name}</span>
+                  <span className="ml-auto text-muted-foreground">
                     {deduction}
                   </span>
                 </div>
@@ -122,7 +122,7 @@ export function DocsRulesPage() {
             </p>
             <div className="flex items-center gap-2 mb-2">
               <Badge className="bg-primary text-sm">REC_001</Badge>
-              <span className="text-sm text-foreground/70">
+              <span className="text-sm text-foreground">
                 Inga rekommendationer (12p)
               </span>
             </div>
@@ -132,11 +132,11 @@ export function DocsRulesPage() {
                 ["REC_003", "Riskmatchning", "12p"],
               ].map(([id, name, deduction]) => (
                 <div key={id} className="flex items-center gap-2 text-sm">
-                  <span className="font-brand text-foreground/60 w-16">
+                  <span className="font-brand text-muted-foreground w-16">
                     {id}
                   </span>
-                  <span className="text-foreground/70">{name}</span>
-                  <span className="ml-auto text-foreground/60">
+                  <span className="text-foreground">{name}</span>
+                  <span className="ml-auto text-muted-foreground">
                     {deduction}
                   </span>
                 </div>

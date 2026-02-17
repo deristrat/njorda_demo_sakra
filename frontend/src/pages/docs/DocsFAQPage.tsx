@@ -137,12 +137,12 @@ function FAQItemComponent({ item }: { item: FAQItem }) {
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg border p-4 text-left hover:bg-muted/50 transition-colors">
         <ChevronRight
-          className={`size-4 shrink-0 text-foreground/40 transition-transform duration-200 ${open ? "rotate-90" : ""}`}
+          className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? "rotate-90" : ""}`}
         />
         <span className="text-base font-medium">{item.question}</span>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="px-4 pb-4 pt-2 ml-6 text-[15px] text-foreground/70 leading-relaxed">
+        <div className="px-4 pb-4 pt-2 ml-6 text-[15px] text-foreground leading-[1.7]">
           {item.answer}
         </div>
       </CollapsibleContent>

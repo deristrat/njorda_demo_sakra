@@ -16,8 +16,8 @@ export function DocsStepList({ steps }: DocsStepListProps) {
             {index + 1}
           </div>
           <div className="pt-0.5">
-            <h4 className="text-base font-medium mb-1">{step.title}</h4>
-            <div className="text-[15px] text-foreground/70 leading-relaxed">
+            <h4 className="text-base font-medium text-foreground mb-1">{step.title}</h4>
+            <div className="text-[15px] text-foreground leading-[1.7]">
               {step.description}
             </div>
           </div>

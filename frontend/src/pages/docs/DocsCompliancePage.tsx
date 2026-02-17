@@ -30,7 +30,7 @@ export function DocsCompliancePage() {
             <div className="size-4 rounded-full bg-green-500" />
             <div>
               <span className="text-base font-medium">Grön — 85–100 poäng</span>
-              <p className="text-sm text-foreground/60">
+              <p className="text-sm text-foreground">
                 Dokumentet uppfyller regelkraven
               </p>
             </div>
@@ -39,7 +39,7 @@ export function DocsCompliancePage() {
             <div className="size-4 rounded-full bg-yellow-500" />
             <div>
               <span className="text-base font-medium">Gul — 50–84 poäng</span>
-              <p className="text-sm text-foreground/60">
+              <p className="text-sm text-foreground">
                 Dokumentet behöver uppmärksamhet — vissa brister identifierade
               </p>
             </div>
@@ -48,7 +48,7 @@ export function DocsCompliancePage() {
             <div className="size-4 rounded-full bg-red-500" />
             <div>
               <span className="text-base font-medium">Röd — 0–49 poäng</span>
-              <p className="text-sm text-foreground/60">
+              <p className="text-sm text-foreground">
                 Dokumentet har betydande brister som kräver åtgärd
               </p>
             </div>

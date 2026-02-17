@@ -14,6 +14,7 @@ const variantConfig = {
     border: "border-blue-200",
     iconColor: "text-blue-600",
     titleColor: "text-blue-900",
+    textColor: "text-blue-900/80",
   },
   tip: {
     icon: Lightbulb,
@@ -21,6 +22,7 @@ const variantConfig = {
     border: "border-primary/20",
     iconColor: "text-primary",
     titleColor: "text-primary",
+    textColor: "text-foreground",
   },
   warning: {
     icon: AlertTriangle,
@@ -28,6 +30,7 @@ const variantConfig = {
     border: "border-amber-200",
     iconColor: "text-amber-600",
     titleColor: "text-amber-900",
+    textColor: "text-amber-900/80",
   },
 };
 
@@ -51,7 +54,7 @@ export function DocsCallout({ variant, title, children }: DocsCalloutProps) {
               {title}
             </p>
           )}
-          <div className="text-[15px] text-foreground/70 leading-relaxed [&>p]:mb-2 [&>p:last-child]:mb-0">
+          <div className={cn("text-[15px] leading-[1.7] [&>p]:mb-2 [&>p:last-child]:mb-0", config.textColor)}>
             {children}
           </div>
         </div>
