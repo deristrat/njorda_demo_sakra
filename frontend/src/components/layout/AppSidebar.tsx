@@ -10,6 +10,7 @@ import {
   LogOut,
   ChevronUp,
   ChevronRight,
+  BookOpen,
 } from "lucide-react";
 import {
   Sidebar,
@@ -125,6 +126,15 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => window.open("/docs", "_blank")}
+              tooltip="Dokumentation"
+            >
+              <BookOpen className="size-4" />
+              <span>Dokumentation</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

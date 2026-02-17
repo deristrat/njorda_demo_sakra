@@ -1,4 +1,4 @@
-import { Bell } from "lucide-react";
+import { Bell, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -14,7 +14,14 @@ export function AppHeader({ title }: AppHeaderProps) {
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-5" />
       <h1 className="font-brand text-base tracking-tight">{title}</h1>
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => window.open("/docs", "_blank")}
+        >
+          <HelpCircle className="size-4" />
+        </Button>
         <Button
           variant="ghost"
           size="icon"

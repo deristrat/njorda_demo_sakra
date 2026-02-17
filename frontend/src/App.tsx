@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { DocsLayout } from "@/components/docs/DocsLayout";
 import { LoginPage } from "@/pages/LoginPage";
 import { UploadPage } from "@/pages/UploadPage";
 import { DocumentsPage } from "@/pages/DocumentsPage";
@@ -12,6 +13,16 @@ import { SettingsPage } from "@/pages/SettingsPage";
 import { FontSettingsPage } from "@/pages/FontSettingsPage";
 import { ComplianceSettingsPage } from "@/pages/ComplianceSettingsPage";
 import { ComplianceRuleDetailPage } from "@/pages/ComplianceRuleDetailPage";
+import { DocsHomePage } from "@/pages/docs/DocsHomePage";
+import { GettingStartedPage } from "@/pages/docs/GettingStartedPage";
+import { DocsUploadPage } from "@/pages/docs/DocsUploadPage";
+import { DocsDocumentsPage } from "@/pages/docs/DocsDocumentsPage";
+import { DocsCompliancePage } from "@/pages/docs/DocsCompliancePage";
+import { DocsScoringPage } from "@/pages/docs/DocsScoringPage";
+import { DocsCommunicationPage } from "@/pages/docs/DocsCommunicationPage";
+import { DocsConfigPage } from "@/pages/docs/DocsConfigPage";
+import { DocsRulesPage } from "@/pages/docs/DocsRulesPage";
+import { DocsFAQPage } from "@/pages/docs/DocsFAQPage";
 
 export default function App() {
   return (
@@ -29,6 +40,18 @@ export default function App() {
             <Route path="/examples/dashboard" element={<DashboardPage />} />
             <Route path="/examples/clients" element={<ClientsPage />} />
             <Route path="/examples/settings" element={<SettingsPage />} />
+          </Route>
+          <Route element={<DocsLayout />}>
+            <Route path="/docs" element={<DocsHomePage />} />
+            <Route path="/docs/kom-igang" element={<GettingStartedPage />} />
+            <Route path="/docs/ladda-upp" element={<DocsUploadPage />} />
+            <Route path="/docs/dokument" element={<DocsDocumentsPage />} />
+            <Route path="/docs/regelefterlevnad" element={<DocsCompliancePage />} />
+            <Route path="/docs/poangsystem" element={<DocsScoringPage />} />
+            <Route path="/docs/kommunikation" element={<DocsCommunicationPage />} />
+            <Route path="/docs/konfiguration" element={<DocsConfigPage />} />
+            <Route path="/docs/regler" element={<DocsRulesPage />} />
+            <Route path="/docs/faq" element={<DocsFAQPage />} />
           </Route>
         </Routes>
         <Toaster richColors position="bottom-right" />
