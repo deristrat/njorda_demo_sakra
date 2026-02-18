@@ -135,10 +135,10 @@ export function ComplianceSettingsPage() {
     const standalone = sortedRules.filter(
       (r) => !r.parent_rule_id && !sortedRules.some((c) => c.parent_rule_id === r.rule_id),
     );
-    const groups = parents.map((p) => ({
+    const groups: { category: string; label: string; parentRule: ComplianceRuleConfig | null; rules: ComplianceRuleConfig[] }[] = parents.map((p) => ({
       category: p.rule_id,
       label: p.name,
-      parentRule: p,
+      parentRule: p as ComplianceRuleConfig | null,
       rules: sortedRules.filter((r) => r.parent_rule_id === p.rule_id),
     }));
     if (standalone.length > 0) {
