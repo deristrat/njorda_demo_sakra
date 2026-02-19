@@ -13,6 +13,8 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       UPLOAD_DIR: /app/uploads
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
     volumes:
       - uploads_data:/app/uploads
     networks:
