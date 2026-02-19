@@ -1,5 +1,5 @@
 services:
-  api:
+  sakra-api:
     build: ./backend
     restart: always
     expose:
@@ -26,7 +26,7 @@ services:
     expose:
       - "80"
     depends_on:
-      - api
+      - sakra-api
     networks:
       - dokploy-network
 
