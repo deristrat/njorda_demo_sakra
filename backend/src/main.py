@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import settings as app_settings
 from src.routers import (
+    auth,
     health,
     dashboard,
     clients,
@@ -23,6 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(health.router)
 app.include_router(dashboard.router)
 app.include_router(clients.router)

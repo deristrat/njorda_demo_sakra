@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import cast, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
+from src.auth import get_current_user_optional
+from src.compliance.audit import record_rule_audit, rule_to_dict
 from src.compliance.engine import (
     DEFAULT_THRESHOLD_GREEN,
     DEFAULT_THRESHOLD_YELLOW,
@@ -20,7 +23,7 @@ from src.compliance.seed import seed_default_rules
 from src.database import get_db
 from src.extraction.models import ExtractionResult
 from src.models.app_settings import get_setting, set_setting
-from src.models.compliance import ComplianceFinding, ComplianceRule
+from src.models.compliance import ComplianceFinding, ComplianceRule, ComplianceRuleAudit
 from src.models.document import Document, DocumentExtraction
 
 router = APIRouter(prefix="/api/compliance", tags=["compliance"])
@@ -55,6 +58,36 @@ class RuleUpdate(BaseModel):
     name: str | None = None
     remediation: str | None = None
     max_deduction: int | None = None
+    description: str | None = None
+    rule_params: dict | None = None
+    document_types: list[str] | None = None
+    parent_rule_id: str | None = None  # "" means clear
+
+
+class RuleCreate(BaseModel):
+    rule_id: str
+    name: str
+    category: str
+    rule_type: str
+    default_severity: str
+    description: str | None = None
+    rule_params: dict | None = None
+    document_types: list[str] = ["all"]
+    parent_rule_id: str | None = None
+    tier: int = 1
+    max_deduction: int = 5
+    remediation: str | None = None
+    enabled: bool = True
+
+
+class AuditEntryResponse(BaseModel):
+    id: int
+    rule_id: str
+    action: str
+    changed_by: str
+    changed_at: str
+    old_values: dict | None
+    new_values: dict
 
 
 class ThresholdsResponse(BaseModel):
@@ -65,6 +98,94 @@ class ThresholdsResponse(BaseModel):
 class ThresholdsUpdate(BaseModel):
     green: int | None = None
     yellow: int | None = None
+
+
+# ---------------------------------------------------------------------------
+# Validation helpers
+# ---------------------------------------------------------------------------
+
+VALID_DOCUMENT_TYPES = {
+    "all",
+    "investment_advice",
+    "pension_transfer",
+    "suitability_assessment",
+    "insurance_advice",
+}
+
+VALID_CONTEXT_FIELDS = {
+    "client",
+    "advisor",
+    "suitability",
+    "recommendations",
+    "pension_provider_from",
+    "pension_provider_to",
+    "transfer_amount",
+    "raw_data",
+    "confidence_notes",
+    "document_type",
+    "document_date",
+}
+
+
+def _validate_rule_params(rule_type: str, params: dict) -> None:
+    """Validate rule_params matches expected shape for rule_type. Raises HTTPException(422)."""
+    if rule_type == "require_field":
+        fp = params.get("field_path")
+        if not isinstance(fp, str) or not fp.strip():
+            raise HTTPException(422, "field_path krävs och får inte vara tomt")
+    elif rule_type == "require_any_items":
+        fp = params.get("field_path")
+        if not isinstance(fp, str) or not fp.strip():
+            raise HTTPException(422, "field_path krävs och får inte vara tomt")
+    elif rule_type == "require_field_on_items":
+        lp = params.get("list_path")
+        ifield = params.get("item_field")
+        if not isinstance(lp, str) or not lp.strip():
+            raise HTTPException(422, "list_path krävs och får inte vara tomt")
+        if not isinstance(ifield, str) or not ifield.strip():
+            raise HTTPException(422, "item_field krävs och får inte vara tomt")
+    elif rule_type == "ai_evaluate":
+        prompt = params.get("prompt")
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise HTTPException(422, "prompt krävs och får inte vara tomt")
+        ctx = params.get("context_fields")
+        if not isinstance(ctx, list):
+            raise HTTPException(422, "context_fields måste vara en lista")
+        invalid = set(ctx) - VALID_CONTEXT_FIELDS
+        if invalid:
+            raise HTTPException(
+                422,
+                f"Ogiltiga context_fields: {', '.join(sorted(invalid))}",
+            )
+    elif rule_type == "custom":
+        fn = params.get("function_name")
+        if not isinstance(fn, str) or not fn.strip():
+            raise HTTPException(422, "function_name krävs och får inte vara tomt")
+
+
+def _validate_parent_rule_id(
+    current_rule_id: str, proposed_parent_id: str, db: Session
+) -> None:
+    """Check parent exists and detect circular references. Raises HTTPException(422)."""
+    parent = db.execute(
+        select(ComplianceRule).where(ComplianceRule.rule_id == proposed_parent_id)
+    ).scalar_one_or_none()
+    if not parent:
+        raise HTTPException(422, f"Överordnad regel hittades inte: {proposed_parent_id}")
+
+    # Walk the parent chain to detect cycles (max 10 levels)
+    visited = {current_rule_id}
+    cursor_id = proposed_parent_id
+    for _ in range(10):
+        if cursor_id in visited:
+            raise HTTPException(422, "Cirkulär referens: regeln kan inte vara sin egen överordnad")
+        visited.add(cursor_id)
+        cursor_rule = db.execute(
+            select(ComplianceRule).where(ComplianceRule.rule_id == cursor_id)
+        ).scalar_one_or_none()
+        if not cursor_rule or not cursor_rule.parent_rule_id:
+            break
+        cursor_id = cursor_rule.parent_rule_id
 
 
 # ---------------------------------------------------------------------------
@@ -105,35 +226,64 @@ def list_rules(db: Session = Depends(get_db)) -> list[RuleResponse]:
     ]
 
 
-@router.put("/rules/{rule_id}")
-def update_rule(
-    rule_id: str,
-    body: RuleUpdate,
+@router.post("/rules", status_code=201)
+def create_rule(
+    body: RuleCreate,
     db: Session = Depends(get_db),
+    current_user: str | None = Depends(get_current_user_optional),
 ) -> RuleResponse:
-    """Update a compliance rule's settings."""
-    rule = db.execute(
-        select(ComplianceRule).where(ComplianceRule.rule_id == rule_id)
+    """Create a new compliance rule."""
+    # Check uniqueness
+    existing = db.execute(
+        select(ComplianceRule).where(ComplianceRule.rule_id == body.rule_id)
     ).scalar_one_or_none()
+    if existing:
+        raise HTTPException(409, f"Regel-ID finns redan: {body.rule_id}")
 
-    if not rule:
-        raise HTTPException(404, f"Rule not found: {rule_id}")
-
-    if body.enabled is not None:
-        rule.enabled = body.enabled
-    if body.severity_override is not None:
-        rule.severity_override = (
-            body.severity_override if body.severity_override != "default" else None
+    # Validate
+    if body.rule_params:
+        _validate_rule_params(body.rule_type, body.rule_params)
+    if not body.document_types:
+        raise HTTPException(422, "Minst en dokumenttyp måste vara vald")
+    invalid_types = set(body.document_types) - VALID_DOCUMENT_TYPES
+    if invalid_types:
+        raise HTTPException(
+            422, f"Ogiltiga dokumenttyper: {', '.join(sorted(invalid_types))}"
         )
-    if body.name is not None:
-        rule.name = body.name
-    if body.remediation is not None:
-        rule.remediation = body.remediation
-    if body.max_deduction is not None:
-        rule.max_deduction = body.max_deduction
+    if body.parent_rule_id:
+        _validate_parent_rule_id(body.rule_id, body.parent_rule_id, db)
 
+    # Auto-assign sort_order
+    max_order = db.execute(
+        select(func.max(ComplianceRule.sort_order))
+    ).scalar() or 0
+    sort_order = max_order + 10
+
+    rule = ComplianceRule(
+        rule_id=body.rule_id,
+        name=body.name,
+        description=body.description,
+        category=body.category,
+        tier=body.tier,
+        rule_type=body.rule_type,
+        rule_params=body.rule_params,
+        document_types=body.document_types,
+        default_severity=body.default_severity,
+        max_deduction=body.max_deduction,
+        remediation=body.remediation,
+        parent_rule_id=body.parent_rule_id,
+        enabled=body.enabled,
+        sort_order=sort_order,
+    )
+    db.add(rule)
     db.commit()
     db.refresh(rule)
+
+    record_rule_audit(
+        db, rule.rule_id, "created", current_user or "anonymous",
+        None, rule_to_dict(rule),
+    )
+    db.commit()
 
     return RuleResponse(
         rule_id=rule.rule_id,
@@ -152,6 +302,116 @@ def update_rule(
         enabled=rule.enabled,
         sort_order=rule.sort_order,
     )
+
+
+@router.put("/rules/{rule_id}")
+def update_rule(
+    rule_id: str,
+    body: RuleUpdate,
+    db: Session = Depends(get_db),
+    current_user: str | None = Depends(get_current_user_optional),
+) -> RuleResponse:
+    """Update a compliance rule's settings."""
+    rule = db.execute(
+        select(ComplianceRule).where(ComplianceRule.rule_id == rule_id)
+    ).scalar_one_or_none()
+
+    if not rule:
+        raise HTTPException(404, f"Rule not found: {rule_id}")
+
+    old_values = rule_to_dict(rule)
+
+    if body.enabled is not None:
+        rule.enabled = body.enabled
+    if body.severity_override is not None:
+        rule.severity_override = (
+            body.severity_override if body.severity_override != "default" else None
+        )
+    if body.name is not None:
+        rule.name = body.name
+    if body.remediation is not None:
+        rule.remediation = body.remediation
+    if body.max_deduction is not None:
+        rule.max_deduction = body.max_deduction
+    if body.description is not None:
+        rule.description = body.description
+    if body.rule_params is not None:
+        _validate_rule_params(rule.rule_type, body.rule_params)
+        rule.rule_params = body.rule_params
+    if body.document_types is not None:
+        if not body.document_types:
+            raise HTTPException(422, "Minst en dokumenttyp måste vara vald")
+        invalid_types = set(body.document_types) - VALID_DOCUMENT_TYPES
+        if invalid_types:
+            raise HTTPException(
+                422,
+                f"Ogiltiga dokumenttyper: {', '.join(sorted(invalid_types))}",
+            )
+        rule.document_types = body.document_types
+    if body.parent_rule_id is not None:
+        if body.parent_rule_id == "":
+            rule.parent_rule_id = None
+        else:
+            if body.parent_rule_id == rule_id:
+                raise HTTPException(422, "En regel kan inte vara sin egen överordnad")
+            _validate_parent_rule_id(rule_id, body.parent_rule_id, db)
+            rule.parent_rule_id = body.parent_rule_id
+
+    db.commit()
+    db.refresh(rule)
+
+    record_rule_audit(
+        db, rule_id, "updated", current_user or "anonymous",
+        old_values, rule_to_dict(rule),
+    )
+    db.commit()
+
+    return RuleResponse(
+        rule_id=rule.rule_id,
+        name=rule.name,
+        description=rule.description,
+        category=rule.category,
+        tier=rule.tier,
+        rule_type=rule.rule_type,
+        rule_params=rule.rule_params,
+        document_types=rule.document_types,
+        default_severity=rule.default_severity,
+        severity_override=rule.severity_override,
+        max_deduction=rule.max_deduction,
+        remediation=rule.remediation,
+        parent_rule_id=rule.parent_rule_id,
+        enabled=rule.enabled,
+        sort_order=rule.sort_order,
+    )
+
+
+@router.get("/rules/{rule_id}/history")
+def get_rule_history(
+    rule_id: str,
+    db: Session = Depends(get_db),
+) -> list[AuditEntryResponse]:
+    """Get version history for a compliance rule."""
+    entries = (
+        db.execute(
+            select(ComplianceRuleAudit)
+            .where(ComplianceRuleAudit.rule_id == rule_id)
+            .order_by(ComplianceRuleAudit.changed_at.desc())
+        )
+        .scalars()
+        .all()
+    )
+    return [
+        AuditEntryResponse(
+            id=e.id,
+            rule_id=e.rule_id,
+            action=e.action,
+            changed_by=e.changed_by,
+            changed_at=e.changed_at.isoformat(),
+            old_values=e.old_values,
+            new_values=e.new_values,
+        )
+        for e in entries
+    ]
 
 
 # ---------------------------------------------------------------------------

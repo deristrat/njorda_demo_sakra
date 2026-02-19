@@ -9,8 +9,25 @@ import type {
   ComplianceReport,
   ComplianceRuleConfig,
 } from "@/types";
+import { getAuthHeaders } from "@/lib/auth";
 
 const BASE = "/api/documents";
+
+/** Fetch wrapper that injects auth headers and handles 401. */
+export async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  const auth = getAuthHeaders();
+  for (const [k, v] of Object.entries(auth)) {
+    if (!headers.has(k)) headers.set(k, v);
+  }
+  const res = await fetch(url, { ...init, headers });
+  if (res.status === 401) {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_username");
+    window.location.href = "/login";
+  }
+  return res;
+}
 
 export async function uploadDocuments(
   files: File[],
@@ -180,14 +197,25 @@ export async function updateComplianceRule(
     name?: string;
     remediation?: string | null;
     max_deduction?: number;
+    description?: string;
+    rule_params?: Record<string, unknown>;
+    document_types?: string[];
+    parent_rule_id?: string | null;
   },
 ): Promise<ComplianceRuleConfig> {
-  const res = await fetch(`/api/compliance/rules/${ruleId}`, {
+  const res = await apiFetch(`/api/compliance/rules/${ruleId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(update),
   });
-  if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+  if (!res.ok) {
+    let message = `Update failed: ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body.detail) message = body.detail;
+    } catch { /* ignore parse errors */ }
+    throw new Error(message);
+  }
   return res.json();
 }
 
@@ -227,5 +255,58 @@ export async function updateComplianceThresholds(
     body: JSON.stringify(thresholds),
   });
   if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+  return res.json();
+}
+
+// --- Audit ---
+
+export interface AuditEntry {
+  id: number;
+  rule_id: string;
+  action: string;
+  changed_by: string;
+  changed_at: string;
+  old_values: Record<string, unknown> | null;
+  new_values: Record<string, unknown>;
+}
+
+export async function fetchRuleHistory(ruleId: string): Promise<AuditEntry[]> {
+  const res = await fetch(`/api/compliance/rules/${ruleId}/history`);
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return res.json();
+}
+
+// --- Create rule ---
+
+export async function createComplianceRule(
+  rule: {
+    rule_id: string;
+    name: string;
+    category: string;
+    rule_type: string;
+    default_severity: string;
+    description?: string;
+    rule_params?: Record<string, unknown>;
+    document_types?: string[];
+    parent_rule_id?: string | null;
+    tier?: number;
+    max_deduction?: number;
+    remediation?: string;
+    enabled?: boolean;
+  },
+): Promise<ComplianceRuleConfig> {
+  const res = await apiFetch("/api/compliance/rules", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(rule),
+  });
+  if (!res.ok) {
+    let message = `Create failed: ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body.detail) message = body.detail;
+    } catch { /* ignore */ }
+    throw new Error(message);
+  }
   return res.json();
 }

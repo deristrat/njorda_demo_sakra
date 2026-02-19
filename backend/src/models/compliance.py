@@ -1,4 +1,4 @@
-"""SQLAlchemy models for compliance rules and findings."""
+"""SQLAlchemy models for compliance rules, findings, and audit trail."""
 
 from datetime import datetime
 
@@ -67,3 +67,20 @@ class ComplianceFinding(Base):
     checked_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class ComplianceRuleAudit(Base):
+    """Version history for compliance rule changes."""
+
+    __tablename__ = "compliance_rule_audits"
+    __table_args__ = (Index("ix_compliance_rule_audits_rule_id", "rule_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    rule_id: Mapped[str] = mapped_column(String(50))
+    action: Mapped[str] = mapped_column(String(20))  # created, updated, deleted
+    changed_by: Mapped[str] = mapped_column(String(255))
+    changed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    old_values: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    new_values: Mapped[dict] = mapped_column(JSONB)

@@ -5,19 +5,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { NjordaLogo } from "@/components/layout/NjordaLogo";
+import { useAuth } from "@/lib/auth";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const { isAuthenticated, login } = useAuth();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     document.title = "Logga in — Njorda Advisor";
   }, []);
 
-  function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    if (isAuthenticated) navigate("/", { replace: true });
+  }, [isAuthenticated, navigate]);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    navigate("/");
+    setError("");
+    setLoading(true);
+    try {
+      await login(username, password);
+      navigate("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Inloggningen misslyckades");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -32,13 +49,13 @@ export function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">E-post</Label>
+              <Label htmlFor="username">Användarnamn</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="namn@foretag.se"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                placeholder="admin"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -51,8 +68,11 @@ export function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full">
-              Logga in
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Loggar in..." : "Logga in"}
             </Button>
           </form>
         </CardContent>

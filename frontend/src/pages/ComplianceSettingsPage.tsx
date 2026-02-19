@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { Sparkles } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import {
   Card,
@@ -10,6 +10,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -28,24 +29,7 @@ import {
   updateComplianceThresholds,
 } from "@/lib/api";
 import type { ComplianceRuleConfig } from "@/types";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  metadata: "Metadata",
-  kyc: "KYC / Lämplighetsbedömning",
-  recommendations: "Rekommendationer",
-  transfer: "Pensionsflytt",
-  esg: "Hållbarhet (ESG)",
-  suitability_quality: "Kvalitetsbedömning",
-  costs: "Kostnader & Ersättning",
-};
-
-const DOC_TYPE_LABELS: Record<string, string> = {
-  all: "Alla",
-  investment_advice: "Rådgivning",
-  pension_transfer: "Pensionsflytt",
-  suitability_assessment: "Lämplighetsbedömning",
-  insurance_advice: "Försäkring",
-};
+import { CATEGORY_LABELS, DOC_TYPE_LABELS } from "@/components/compliance/RuleParamsEditor";
 
 const CATEGORY_ORDER = [
   "metadata",
@@ -237,7 +221,13 @@ export function ComplianceSettingsPage() {
         {/* Rules table */}
         <Card>
           <CardHeader>
-            <CardTitle>Regler</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Regler</CardTitle>
+              <Button size="sm" onClick={() => navigate("/settings/compliance/new")}>
+                <Plus className="mr-1 size-4" />
+                Ny regel
+              </Button>
+            </div>
             <CardDescription>
               {filteredRules.length} regler — {filteredRules.filter((r) => r.enabled).length}{" "}
               aktiva

@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://app:secret@localhost:21002/app"
     upload_dir: Path = Path(__file__).resolve().parent.parent / "uploads"
     cors_origins: str = "http://localhost:21000"
+    admin_username: str = "admin"
+    admin_password: str = "admin"
 
     @property
     def cors_origins_list(self) -> list[str]:

@@ -38,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NjordaLogo } from "./NjordaLogo";
+import { useAuth } from "@/lib/auth";
 
 const mainNav = [
   { label: "Ladda upp", icon: Upload, path: "/" },
@@ -60,6 +61,9 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const [examplesOpen, setExamplesOpen] = useState(false);
+  const { username, logout } = useAuth();
+  const initials = username ? username.slice(0, 2).toUpperCase() : "??";
+  const displayName = username || "Användare";
 
   return (
     <Sidebar collapsible="icon">
@@ -143,14 +147,14 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
                   <div className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
-                    DA
+                    {initials}
                   </div>
-                  <span className="truncate">Daniel Advisor</span>
+                  <span className="truncate">{displayName}</span>
                   <ChevronUp className="ml-auto size-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" className="w-48">
-                <DropdownMenuItem onClick={() => navigate("/login")}>
+                <DropdownMenuItem onClick={async () => { await logout(); navigate("/login"); }}>
                   <LogOut className="mr-2 size-4" />
                   Logga ut
                 </DropdownMenuItem>

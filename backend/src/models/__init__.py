@@ -3,7 +3,7 @@ from src.models.document import Document, DocumentExtraction
 from src.models.client import Client
 from src.models.advisor import Advisor
 from src.models.app_settings import AppSetting
-from src.models.compliance import ComplianceRule, ComplianceFinding
+from src.models.compliance import ComplianceRule, ComplianceFinding, ComplianceRuleAudit
 
 __all__ = [
     "User",
@@ -14,4 +14,5 @@ __all__ = [
     "AppSetting",
     "ComplianceRule",
     "ComplianceFinding",
+    "ComplianceRuleAudit",
 ]

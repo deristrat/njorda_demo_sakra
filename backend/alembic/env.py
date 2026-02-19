@@ -6,7 +6,7 @@ from sqlalchemy import engine_from_config, pool
 from src.config import settings
 from src.database import Base
 from src.models import User, Document, DocumentExtraction, Client, Advisor, AppSetting  # noqa: F401 – ensure models are registered
-from src.models.compliance import ComplianceRule, ComplianceFinding  # noqa: F401
+from src.models.compliance import ComplianceRule, ComplianceFinding, ComplianceRuleAudit  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
