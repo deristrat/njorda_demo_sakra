@@ -53,7 +53,7 @@ export function LoginPage() {
               <Input
                 id="username"
                 type="text"
-                placeholder="admin"
+                placeholder="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
