@@ -5,10 +5,10 @@ services:
     expose:
       - "8000"
     depends_on:
-      db:
+      sakra-db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@sakra-db:5432/${POSTGRES_DB}
       CORS_ORIGINS: ${CORS_ORIGINS}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
@@ -30,7 +30,7 @@ services:
     networks:
       - dokploy-network
 
-  db:
+  sakra-db:
     image: postgres:16-alpine
     restart: always
     environment:
