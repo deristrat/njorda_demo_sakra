@@ -30,6 +30,7 @@ import {
 } from "@/lib/api";
 import type { ComplianceRuleConfig } from "@/types";
 import { CATEGORY_LABELS, DOC_TYPE_LABELS } from "@/components/compliance/RuleParamsEditor";
+import { toast } from "sonner";
 
 const CATEGORY_ORDER = [
   "metadata",
@@ -58,7 +59,7 @@ export function ComplianceSettingsPage() {
         setRules(ruleData);
         setThresholds(thresholdData);
       })
-      .catch(console.error)
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
       .finally(() => setLoading(false));
   }, []);
 

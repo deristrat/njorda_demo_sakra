@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchClients } from "@/lib/api";
 import { clientListColumns } from "./clientListColumns";
 import type { Client } from "@/types";
+import { toast } from "sonner";
 
 export function ClientsListTable() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export function ClientsListTable() {
   useEffect(() => {
     fetchClients()
       .then(setData)
-      .catch(console.error)
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
       .finally(() => setLoading(false));
   }, []);
 

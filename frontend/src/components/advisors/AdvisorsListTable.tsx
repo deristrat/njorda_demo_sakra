@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchAdvisors } from "@/lib/api";
 import { advisorListColumns } from "./advisorListColumns";
 import type { Advisor } from "@/types";
+import { toast } from "sonner";
 
 export function AdvisorsListTable() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export function AdvisorsListTable() {
   useEffect(() => {
     fetchAdvisors()
       .then(setData)
-      .catch(console.error)
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
       .finally(() => setLoading(false));
   }, []);
 

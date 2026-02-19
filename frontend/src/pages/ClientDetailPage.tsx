@@ -13,6 +13,7 @@ import {
   processDocumentsSSE,
 } from "@/lib/api";
 import type { ClientDetail, DocumentSummary, ProcessEvent } from "@/types";
+import { toast } from "sonner";
 
 export function ClientDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -30,7 +31,7 @@ export function ClientDetailPage() {
     setDocsLoading(true);
     fetchClientDocuments(clientId)
       .then(setDocs)
-      .catch(console.error)
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
       .finally(() => setDocsLoading(false));
   }, [clientId]);
 
@@ -38,7 +39,7 @@ export function ClientDetailPage() {
     if (!id) return;
     fetchClient(clientId)
       .then(setClient)
-      .catch(console.error)
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
       .finally(() => setLoading(false));
     loadDocs();
   }, [id, clientId, loadDocs]);

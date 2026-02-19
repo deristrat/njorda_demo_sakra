@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DocumentsTable } from "@/components/documents/DocumentsTable";
 import { fetchAdvisor, fetchAdvisorDocuments } from "@/lib/api";
 import type { AdvisorDetail, DocumentSummary } from "@/types";
+import { toast } from "sonner";
 
 export function AdvisorDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +24,7 @@ export function AdvisorDetailPage() {
     setDocsLoading(true);
     fetchAdvisorDocuments(advisorId)
       .then(setDocs)
-      .catch(console.error)
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
       .finally(() => setDocsLoading(false));
   }, [advisorId]);
 
@@ -31,7 +32,7 @@ export function AdvisorDetailPage() {
     if (!id) return;
     fetchAdvisor(advisorId)
       .then(setAdvisor)
-      .catch(console.error)
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
       .finally(() => setLoading(false));
     loadDocs();
   }, [id, advisorId, loadDocs]);

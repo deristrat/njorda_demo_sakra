@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchDocuments, deleteDocuments, bulkRecheckCompliance } from "@/lib/api";
 import { documentColumns } from "./documentColumns";
 import type { DocumentSummary } from "@/types";
+import { toast } from "sonner";
 
 interface DocumentsTableProps {
   externalData?: DocumentSummary[];
@@ -53,7 +54,7 @@ export function DocumentsTable({
     }
     fetchDocuments()
       .then(setData)
-      .catch(console.error)
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
       .finally(() => setLoading(false));
   }, [isExternal, externalData, externalLoading]);
 

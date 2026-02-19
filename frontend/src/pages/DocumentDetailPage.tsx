@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { fetchDocument, getDocumentFileUrl } from "@/lib/api";
 import { formatDate, formatSEK } from "@/lib/utils";
+import { toast } from "sonner";
 import { CompliancePanel } from "@/components/compliance/CompliancePanel";
 import type { DocumentDetail, ExtractionData } from "@/types";
 
@@ -73,7 +74,7 @@ export function DocumentDetailPage() {
     if (!id) return;
     fetchDocument(Number(id))
       .then(setDoc)
-      .catch(console.error)
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
       .finally(() => setLoading(false));
   }, [id]);
 

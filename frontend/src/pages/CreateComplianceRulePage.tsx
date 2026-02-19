@@ -62,7 +62,7 @@ export function CreateComplianceRulePage() {
 
   useEffect(() => {
     document.title = "Ny regel — Njorda Advisor";
-    fetchComplianceRules().then(setAllRules).catch(console.error);
+    fetchComplianceRules().then(setAllRules).catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"));
   }, []);
 
   const parentOptions = useMemo(

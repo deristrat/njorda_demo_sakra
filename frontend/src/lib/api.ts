@@ -29,6 +29,15 @@ export async function apiFetch(url: string, init?: RequestInit): Promise<Respons
   return res;
 }
 
+/** Parse error detail from a failed response. */
+async function parseError(res: Response, fallback: string): Promise<string> {
+  try {
+    const body = await res.json();
+    if (body.detail) return body.detail;
+  } catch { /* ignore parse errors */ }
+  return `${fallback}: ${res.status}`;
+}
+
 export async function uploadDocuments(
   files: File[],
   clientId?: number,
@@ -38,8 +47,8 @@ export async function uploadDocuments(
     form.append("files", file);
   }
   const url = clientId != null ? `${BASE}/upload?client_id=${clientId}` : `${BASE}/upload`;
-  const res = await fetch(url, { method: "POST", body: form });
-  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+  const res = await apiFetch(url, { method: "POST", body: form });
+  if (!res.ok) throw new Error(await parseError(res, "Uppladdning misslyckades"));
   return res.json();
 }
 
@@ -67,43 +76,43 @@ export function processDocumentsSSE(
 
   evtSource.onerror = () => {
     evtSource.close();
-    onError(new Error("SSE connection lost"));
+    onError(new Error("SSE-anslutningen bröts"));
   };
 
   return () => evtSource.close();
 }
 
 export async function deleteDocuments(ids: number[]): Promise<{ deleted: number }> {
-  const res = await fetch(`${BASE}/delete`, {
+  const res = await apiFetch(`${BASE}/delete`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ids }),
   });
-  if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+  if (!res.ok) throw new Error(await parseError(res, "Radering misslyckades"));
   return res.json();
 }
 
 export async function bulkRecheckCompliance(
   ids: number[],
 ): Promise<{ results: Array<{ id: number; status: string; message?: string }> }> {
-  const res = await fetch(`${BASE}/bulk-recheck`, {
+  const res = await apiFetch(`${BASE}/bulk-recheck`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ids }),
   });
-  if (!res.ok) throw new Error(`Recheck failed: ${res.status}`);
+  if (!res.ok) throw new Error(await parseError(res, "Omkontroll misslyckades"));
   return res.json();
 }
 
 export async function fetchDocuments(): Promise<DocumentSummary[]> {
-  const res = await fetch(BASE);
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch(BASE);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta dokument"));
   return res.json();
 }
 
 export async function fetchDocument(id: number): Promise<DocumentDetail> {
-  const res = await fetch(`${BASE}/${id}`);
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch(`${BASE}/${id}`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta dokument"));
   return res.json();
 }
 
@@ -114,40 +123,40 @@ export function getDocumentFileUrl(id: number): string {
 // --- Clients ---
 
 export async function fetchClients(): Promise<Client[]> {
-  const res = await fetch("/api/clients");
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch("/api/clients");
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta klienter"));
   return res.json();
 }
 
 export async function fetchClient(id: number): Promise<ClientDetail> {
-  const res = await fetch(`/api/clients/${id}`);
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch(`/api/clients/${id}`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta klient"));
   return res.json();
 }
 
 export async function fetchClientDocuments(id: number): Promise<DocumentSummary[]> {
-  const res = await fetch(`/api/clients/${id}/documents`);
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch(`/api/clients/${id}/documents`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta dokument"));
   return res.json();
 }
 
 // --- Advisors ---
 
 export async function fetchAdvisors(): Promise<Advisor[]> {
-  const res = await fetch("/api/advisors");
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch("/api/advisors");
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta rådgivare"));
   return res.json();
 }
 
 export async function fetchAdvisor(id: number): Promise<AdvisorDetail> {
-  const res = await fetch(`/api/advisors/${id}`);
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch(`/api/advisors/${id}`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta rådgivare"));
   return res.json();
 }
 
 export async function fetchAdvisorDocuments(id: number): Promise<DocumentSummary[]> {
-  const res = await fetch(`/api/advisors/${id}/documents`);
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch(`/api/advisors/${id}/documents`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta dokument"));
   return res.json();
 }
 
@@ -160,32 +169,32 @@ export interface ExtractorModel {
 }
 
 export async function fetchExtractorModels(): Promise<ExtractorModel[]> {
-  const res = await fetch("/api/settings/extractor-models");
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch("/api/settings/extractor-models");
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta modeller"));
   return res.json();
 }
 
 export async function fetchExtractorModel(): Promise<string> {
-  const res = await fetch("/api/settings/extractor-model");
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch("/api/settings/extractor-model");
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta modell"));
   const data = await res.json();
   return data.model;
 }
 
 export async function setExtractorModel(model: string): Promise<void> {
-  const res = await fetch("/api/settings/extractor-model", {
+  const res = await apiFetch("/api/settings/extractor-model", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ model }),
   });
-  if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte uppdatera modell"));
 }
 
 // --- Compliance ---
 
 export async function fetchComplianceRules(): Promise<ComplianceRuleConfig[]> {
-  const res = await fetch("/api/compliance/rules");
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch("/api/compliance/rules");
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta regler"));
   return res.json();
 }
 
@@ -208,32 +217,25 @@ export async function updateComplianceRule(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(update),
   });
-  if (!res.ok) {
-    let message = `Update failed: ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body.detail) message = body.detail;
-    } catch { /* ignore parse errors */ }
-    throw new Error(message);
-  }
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte uppdatera regel"));
   return res.json();
 }
 
 export async function fetchDocumentCompliance(
   documentId: number,
 ): Promise<ComplianceReport> {
-  const res = await fetch(`/api/compliance/documents/${documentId}`);
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch(`/api/compliance/documents/${documentId}`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta regelefterlevnad"));
   return res.json();
 }
 
 export async function recheckDocumentCompliance(
   documentId: number,
 ): Promise<ComplianceReport> {
-  const res = await fetch(`/api/compliance/documents/${documentId}/recheck`, {
+  const res = await apiFetch(`/api/compliance/documents/${documentId}/recheck`, {
     method: "POST",
   });
-  if (!res.ok) throw new Error(`Recheck failed: ${res.status}`);
+  if (!res.ok) throw new Error(await parseError(res, "Omkontroll misslyckades"));
   return res.json();
 }
 
@@ -241,20 +243,20 @@ export async function fetchComplianceThresholds(): Promise<{
   green: number;
   yellow: number;
 }> {
-  const res = await fetch("/api/compliance/thresholds");
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch("/api/compliance/thresholds");
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta tröskelvärden"));
   return res.json();
 }
 
 export async function updateComplianceThresholds(
   thresholds: { green?: number; yellow?: number },
 ): Promise<{ green: number; yellow: number }> {
-  const res = await fetch("/api/compliance/thresholds", {
+  const res = await apiFetch("/api/compliance/thresholds", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(thresholds),
   });
-  if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte uppdatera tröskelvärden"));
   return res.json();
 }
 
@@ -271,8 +273,8 @@ export interface AuditEntry {
 }
 
 export async function fetchRuleHistory(ruleId: string): Promise<AuditEntry[]> {
-  const res = await fetch(`/api/compliance/rules/${ruleId}/history`);
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  const res = await apiFetch(`/api/compliance/rules/${ruleId}/history`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta historik"));
   return res.json();
 }
 
@@ -300,13 +302,6 @@ export async function createComplianceRule(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(rule),
   });
-  if (!res.ok) {
-    let message = `Create failed: ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body.detail) message = body.detail;
-    } catch { /* ignore */ }
-    throw new Error(message);
-  }
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte skapa regel"));
   return res.json();
 }

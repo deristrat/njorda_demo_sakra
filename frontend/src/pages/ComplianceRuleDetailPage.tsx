@@ -85,7 +85,7 @@ export function ComplianceRuleDetailPage() {
   const [ruleParams, setRuleParams] = useState<Record<string, unknown>>({});
 
   const loadHistory = (id: string) => {
-    fetchRuleHistory(id).then(setHistory).catch(console.error);
+    fetchRuleHistory(id).then(setHistory).catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"));
   };
 
   useEffect(() => {
@@ -113,7 +113,7 @@ export function ComplianceRuleDetailPage() {
           );
         }
       })
-      .catch(console.error)
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
       .finally(() => setLoading(false));
     loadHistory(ruleId);
   }, [ruleId]);

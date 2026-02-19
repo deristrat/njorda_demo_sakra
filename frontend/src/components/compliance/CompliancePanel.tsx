@@ -17,6 +17,7 @@ import {
   recheckDocumentCompliance,
 } from "@/lib/api";
 import type { ComplianceReport, ComplianceRuleOutcome } from "@/types";
+import { toast } from "sonner";
 
 interface CompliancePanelProps {
   documentId: number;
@@ -38,7 +39,7 @@ export function CompliancePanel({ documentId }: CompliancePanelProps) {
   useEffect(() => {
     fetchDocumentCompliance(documentId)
       .then(setReport)
-      .catch(console.error)
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
       .finally(() => setLoading(false));
   }, [documentId]);
 
