@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, joinedload
 
+from src.auth import TokenInfo, get_effective_user
 from src.config import settings
 from src.database import get_db
 from src.extraction.base import ExtractionError
@@ -25,11 +26,18 @@ from src.routers.compliance import run_compliance_for_document
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 
+def _check_doc_ownership(doc: Document, user: TokenInfo) -> None:
+    """Raise 403 if advisor user doesn't own this document."""
+    if user.effective_role == "advisor" and doc.advisor_id != user.effective_advisor_id:
+        raise HTTPException(403, "Åtkomst nekad")
+
+
 @router.post("/upload")
 async def upload_documents(
     files: list[UploadFile],
     client_id: int | None = Query(None),
     db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
 ):
     settings.upload_dir.mkdir(parents=True, exist_ok=True)
 
@@ -68,6 +76,11 @@ async def upload_documents(
             ).scalar_one_or_none()
             if existing_client:
                 doc.client_id = client_id
+
+        # Auto-link advisor for advisor users
+        if user.effective_role == "advisor" and user.effective_advisor_id:
+            doc.advisor_id = user.effective_advisor_id
+
         db.add(doc)
         db.flush()
 
@@ -88,6 +101,7 @@ async def upload_documents(
 async def process_documents(
     ids: str,
     db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
 ):
     doc_ids = [int(x.strip()) for x in ids.split(",") if x.strip()]
 
@@ -95,6 +109,11 @@ async def process_documents(
 
     if not docs:
         raise HTTPException(404, "No documents found")
+
+    # Advisor can only process own docs
+    if user.effective_role == "advisor":
+        for doc in docs:
+            _check_doc_ownership(doc, user)
 
     async def event_stream():
         model_name = get_setting(db, "extractor_model", "claude-sonnet")
@@ -199,6 +218,7 @@ async def process_documents(
 def delete_documents(
     body: dict,
     db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
 ):
     """Bulk delete documents by IDs."""
     ids = body.get("ids", [])
@@ -208,6 +228,11 @@ def delete_documents(
     docs = db.execute(select(Document).where(Document.id.in_(ids))).scalars().all()
     if not docs:
         raise HTTPException(404, "No documents found")
+
+    # Advisor can only delete own docs
+    if user.effective_role == "advisor":
+        for doc in docs:
+            _check_doc_ownership(doc, user)
 
     for doc in docs:
         # Delete the file from disk
@@ -230,6 +255,7 @@ def delete_documents(
 def bulk_recheck_compliance(
     body: dict,
     db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
 ):
     """Bulk recheck compliance for documents by IDs."""
     ids = body.get("ids", [])
@@ -239,6 +265,11 @@ def bulk_recheck_compliance(
     docs = db.execute(select(Document).where(Document.id.in_(ids))).scalars().all()
     if not docs:
         raise HTTPException(404, "No documents found")
+
+    # Advisor can only recheck own docs
+    if user.effective_role == "advisor":
+        for doc in docs:
+            _check_doc_ownership(doc, user)
 
     results = []
     for doc in docs:
@@ -252,23 +283,30 @@ def bulk_recheck_compliance(
 
 
 @router.get("")
-def list_documents(db: Session = Depends(get_db)):
-    docs = (
-        db.execute(
-            select(Document)
-            .options(joinedload(Document.extractions))
-            .order_by(Document.created_at.desc())
-        )
-        .unique()
-        .scalars()
-        .all()
+def list_documents(
+    db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
+):
+    query = (
+        select(Document)
+        .options(joinedload(Document.extractions))
+        .order_by(Document.created_at.desc())
     )
 
+    # Advisor sees only own documents
+    if user.effective_role == "advisor":
+        query = query.where(Document.advisor_id == user.effective_advisor_id)
+
+    docs = db.execute(query).unique().scalars().all()
     return [_doc_summary(doc) for doc in docs]
 
 
 @router.get("/{document_id}")
-def get_document(document_id: int, db: Session = Depends(get_db)):
+def get_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
+):
     doc = (
         db.execute(
             select(Document)
@@ -281,6 +319,8 @@ def get_document(document_id: int, db: Session = Depends(get_db)):
 
     if not doc:
         raise HTTPException(404, "Document not found")
+
+    _check_doc_ownership(doc, user)
 
     return {
         "id": doc.id,
@@ -311,13 +351,19 @@ def get_document(document_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/{document_id}/file")
-def get_document_file(document_id: int, db: Session = Depends(get_db)):
+def get_document_file(
+    document_id: int,
+    db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
+):
     doc = db.execute(
         select(Document).where(Document.id == document_id)
     ).scalar_one_or_none()
 
     if not doc:
         raise HTTPException(404, "Document not found")
+
+    _check_doc_ownership(doc, user)
 
     file_path = settings.upload_dir / doc.stored_filename
     if not file_path.exists():

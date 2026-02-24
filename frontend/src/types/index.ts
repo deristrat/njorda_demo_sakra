@@ -1,3 +1,5 @@
+export type UserRole = "advisor" | "compliance" | "njorda_admin";
+
 export interface KPI {
   id: string;
   label: string;

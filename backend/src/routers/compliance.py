@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from src.auth import get_current_user_optional
+from src.auth import TokenInfo, get_current_user_optional, get_effective_user
 from src.compliance.audit import record_rule_audit, rule_to_dict
 from src.compliance.engine import (
     DEFAULT_THRESHOLD_GREEN,
@@ -27,6 +27,18 @@ from src.models.compliance import ComplianceFinding, ComplianceRule, ComplianceR
 from src.models.document import Document, DocumentExtraction
 
 router = APIRouter(prefix="/api/compliance", tags=["compliance"])
+
+
+def _require_compliance_or_admin(user: TokenInfo) -> None:
+    """Raise 403 if not compliance or njorda_admin."""
+    if user.effective_role not in ("compliance", "njorda_admin"):
+        raise HTTPException(403, "Åtkomst nekad")
+
+
+def _check_doc_access(doc: Document, user: TokenInfo) -> None:
+    """Raise 403 if advisor doesn't own this document."""
+    if user.effective_role == "advisor" and doc.advisor_id != user.effective_advisor_id:
+        raise HTTPException(403, "Åtkomst nekad")
 
 
 # ---------------------------------------------------------------------------
@@ -189,13 +201,18 @@ def _validate_parent_rule_id(
 
 
 # ---------------------------------------------------------------------------
-# Rules management
+# Rules management (compliance + njorda_admin only)
 # ---------------------------------------------------------------------------
 
 
 @router.get("/rules")
-def list_rules(db: Session = Depends(get_db)) -> list[RuleResponse]:
+def list_rules(
+    db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
+) -> list[RuleResponse]:
     """List all compliance rules with current settings."""
+    _require_compliance_or_admin(user)
+
     # Ensure rules are seeded
     seed_default_rules(db)
 
@@ -230,9 +247,11 @@ def list_rules(db: Session = Depends(get_db)) -> list[RuleResponse]:
 def create_rule(
     body: RuleCreate,
     db: Session = Depends(get_db),
-    current_user: str | None = Depends(get_current_user_optional),
+    user: TokenInfo = Depends(get_effective_user),
 ) -> RuleResponse:
     """Create a new compliance rule."""
+    _require_compliance_or_admin(user)
+
     # Check uniqueness
     existing = db.execute(
         select(ComplianceRule).where(ComplianceRule.rule_id == body.rule_id)
@@ -280,7 +299,7 @@ def create_rule(
     db.refresh(rule)
 
     record_rule_audit(
-        db, rule.rule_id, "created", current_user or "anonymous",
+        db, rule.rule_id, "created", user.effective_username,
         None, rule_to_dict(rule),
     )
     db.commit()
@@ -309,9 +328,11 @@ def update_rule(
     rule_id: str,
     body: RuleUpdate,
     db: Session = Depends(get_db),
-    current_user: str | None = Depends(get_current_user_optional),
+    user: TokenInfo = Depends(get_effective_user),
 ) -> RuleResponse:
     """Update a compliance rule's settings."""
+    _require_compliance_or_admin(user)
+
     rule = db.execute(
         select(ComplianceRule).where(ComplianceRule.rule_id == rule_id)
     ).scalar_one_or_none()
@@ -361,7 +382,7 @@ def update_rule(
     db.refresh(rule)
 
     record_rule_audit(
-        db, rule_id, "updated", current_user or "anonymous",
+        db, rule_id, "updated", user.effective_username,
         old_values, rule_to_dict(rule),
     )
     db.commit()
@@ -389,8 +410,11 @@ def update_rule(
 def get_rule_history(
     rule_id: str,
     db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
 ) -> list[AuditEntryResponse]:
     """Get version history for a compliance rule."""
+    _require_compliance_or_admin(user)
+
     entries = (
         db.execute(
             select(ComplianceRuleAudit)
@@ -415,12 +439,16 @@ def get_rule_history(
 
 
 # ---------------------------------------------------------------------------
-# Thresholds
+# Thresholds (compliance + njorda_admin only)
 # ---------------------------------------------------------------------------
 
 
 @router.get("/thresholds")
-def get_thresholds(db: Session = Depends(get_db)) -> ThresholdsResponse:
+def get_thresholds(
+    db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
+) -> ThresholdsResponse:
+    _require_compliance_or_admin(user)
     green = int(
         get_setting(db, "compliance_threshold_green", str(DEFAULT_THRESHOLD_GREEN))
         or DEFAULT_THRESHOLD_GREEN
@@ -436,16 +464,27 @@ def get_thresholds(db: Session = Depends(get_db)) -> ThresholdsResponse:
 def update_thresholds(
     body: ThresholdsUpdate,
     db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
 ) -> ThresholdsResponse:
+    _require_compliance_or_admin(user)
     if body.green is not None:
         set_setting(db, "compliance_threshold_green", str(body.green))
     if body.yellow is not None:
         set_setting(db, "compliance_threshold_yellow", str(body.yellow))
-    return get_thresholds(db)
+    _require_compliance_or_admin(user)
+    green = int(
+        get_setting(db, "compliance_threshold_green", str(DEFAULT_THRESHOLD_GREEN))
+        or DEFAULT_THRESHOLD_GREEN
+    )
+    yellow = int(
+        get_setting(db, "compliance_threshold_yellow", str(DEFAULT_THRESHOLD_YELLOW))
+        or DEFAULT_THRESHOLD_YELLOW
+    )
+    return ThresholdsResponse(green=green, yellow=yellow)
 
 
 # ---------------------------------------------------------------------------
-# Document compliance
+# Document compliance (all roles, advisor restricted to own docs)
 # ---------------------------------------------------------------------------
 
 
@@ -453,6 +492,7 @@ def update_thresholds(
 def get_document_compliance(
     document_id: int,
     db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
 ) -> ComplianceReport:
     """Get compliance report for a document. Runs checks if not yet done."""
     doc = db.execute(
@@ -461,6 +501,8 @@ def get_document_compliance(
 
     if not doc:
         raise HTTPException(404, "Document not found")
+
+    _check_doc_access(doc, user)
 
     # If already checked, reconstruct report from stored findings
     if doc.compliance_status is not None:
@@ -474,6 +516,7 @@ def get_document_compliance(
 def recheck_document_compliance(
     document_id: int,
     db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
 ) -> ComplianceReport:
     """Re-run compliance checks for a document."""
     doc = db.execute(
@@ -482,6 +525,8 @@ def recheck_document_compliance(
 
     if not doc:
         raise HTTPException(404, "Document not found")
+
+    _check_doc_access(doc, user)
 
     return _run_compliance_check(doc, db)
 

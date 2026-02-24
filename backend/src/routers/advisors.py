@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import distinct, func, select
 from sqlalchemy.orm import Session, joinedload
 
+from src.auth import TokenInfo, get_effective_user
 from src.database import get_db
 from src.models.advisor import Advisor
 from src.models.document import Document
@@ -14,7 +15,10 @@ router = APIRouter(prefix="/api", tags=["advisors"])
 
 
 @router.get("/advisors")
-def list_advisors(db: Session = Depends(get_db)):
+def list_advisors(
+    db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
+):
     """List all advisors with aggregated stats."""
     doc_stats = (
         select(
@@ -34,18 +38,22 @@ def list_advisors(db: Session = Depends(get_db)):
         .subquery()
     )
 
-    rows = db.execute(
-        select(
-            Advisor,
-            func.coalesce(doc_stats.c.document_count, 0).label("document_count"),
-            func.coalesce(doc_stats.c.client_count, 0).label("client_count"),
-            doc_stats.c.avg_compliance_score,
-            func.coalesce(doc_stats.c.clients_with_issues, 0).label(
-                "clients_with_issues"
-            ),
-            doc_stats.c.latest_document_date,
-        ).outerjoin(doc_stats, Advisor.id == doc_stats.c.advisor_id)
-    ).all()
+    query = select(
+        Advisor,
+        func.coalesce(doc_stats.c.document_count, 0).label("document_count"),
+        func.coalesce(doc_stats.c.client_count, 0).label("client_count"),
+        doc_stats.c.avg_compliance_score,
+        func.coalesce(doc_stats.c.clients_with_issues, 0).label(
+            "clients_with_issues"
+        ),
+        doc_stats.c.latest_document_date,
+    ).outerjoin(doc_stats, Advisor.id == doc_stats.c.advisor_id)
+
+    # Advisor: only their own record
+    if user.effective_role == "advisor" and user.effective_advisor_id:
+        query = query.where(Advisor.id == user.effective_advisor_id)
+
+    rows = db.execute(query).all()
 
     return [
         {
@@ -68,8 +76,16 @@ def list_advisors(db: Session = Depends(get_db)):
 
 
 @router.get("/advisors/{advisor_id}")
-def get_advisor(advisor_id: int, db: Session = Depends(get_db)):
+def get_advisor(
+    advisor_id: int,
+    db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
+):
     """Get advisor detail with all fields."""
+    # Advisor: can only view own record
+    if user.effective_role == "advisor" and advisor_id != user.effective_advisor_id:
+        raise HTTPException(403, "Åtkomst nekad")
+
     advisor = db.execute(
         select(Advisor).where(Advisor.id == advisor_id)
     ).scalar_one_or_none()
@@ -88,8 +104,16 @@ def get_advisor(advisor_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/advisors/{advisor_id}/documents")
-def get_advisor_documents(advisor_id: int, db: Session = Depends(get_db)):
+def get_advisor_documents(
+    advisor_id: int,
+    db: Session = Depends(get_db),
+    user: TokenInfo = Depends(get_effective_user),
+):
     """Get all documents for a specific advisor."""
+    # Advisor: can only view own docs
+    if user.effective_role == "advisor" and advisor_id != user.effective_advisor_id:
+        raise HTTPException(403, "Åtkomst nekad")
+
     advisor = db.execute(
         select(Advisor).where(Advisor.id == advisor_id)
     ).scalar_one_or_none()

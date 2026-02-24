@@ -24,6 +24,10 @@ export async function apiFetch(url: string, init?: RequestInit): Promise<Respons
   if (res.status === 401) {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_username");
+    localStorage.removeItem("auth_role");
+    localStorage.removeItem("auth_name");
+    localStorage.removeItem("auth_user_id");
+    localStorage.removeItem("auth_advisor_id");
     window.location.href = "/login";
   }
   return res;
@@ -303,5 +307,20 @@ export async function createComplianceRule(
     body: JSON.stringify(rule),
   });
   if (!res.ok) throw new Error(await parseError(res, "Kunde inte skapa regel"));
+  return res.json();
+}
+
+// --- Users & Impersonation ---
+
+export interface AppUser {
+  id: number;
+  username: string;
+  name: string | null;
+  role: string;
+}
+
+export async function fetchUsers(): Promise<AppUser[]> {
+  const res = await apiFetch("/api/auth/users");
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta användare"));
   return res.json();
 }

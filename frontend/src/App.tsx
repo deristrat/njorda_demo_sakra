@@ -29,10 +29,18 @@ import { DocsCommunicationPage } from "@/pages/docs/DocsCommunicationPage";
 import { DocsConfigPage } from "@/pages/docs/DocsConfigPage";
 import { DocsRulesPage } from "@/pages/docs/DocsRulesPage";
 import { DocsFAQPage } from "@/pages/docs/DocsFAQPage";
+import type { UserRole } from "@/types";
 
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <Outlet />;
+}
+
+function RoleRoute({ roles }: { roles: UserRole[] }) {
+  const { isAuthenticated, effectiveRole } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!effectiveRole || !roles.includes(effectiveRole)) return <Navigate to="/" replace />;
   return <Outlet />;
 }
 
@@ -45,6 +53,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
+                {/* All authenticated users */}
                 <Route path="/" element={<UploadPage />} />
                 <Route path="/documents" element={<DocumentsPage />} />
                 <Route path="/documents/:id" element={<DocumentDetailPage />} />
@@ -52,13 +61,21 @@ export default function App() {
                 <Route path="/clients/:id" element={<ClientDetailPage />} />
                 <Route path="/advisors" element={<AdvisorsListPage />} />
                 <Route path="/advisors/:id" element={<AdvisorDetailPage />} />
-                <Route path="/settings" element={<FontSettingsPage />} />
-                <Route path="/settings/compliance" element={<ComplianceSettingsPage />} />
-                <Route path="/settings/compliance/new" element={<CreateComplianceRulePage />} />
-                <Route path="/settings/compliance/:ruleId" element={<ComplianceRuleDetailPage />} />
-                <Route path="/examples/dashboard" element={<DashboardPage />} />
-                <Route path="/examples/clients" element={<ClientsPage />} />
-                <Route path="/examples/settings" element={<SettingsPage />} />
+
+                {/* compliance + njorda_admin only */}
+                <Route element={<RoleRoute roles={["compliance", "njorda_admin"]} />}>
+                  <Route path="/settings" element={<FontSettingsPage />} />
+                  <Route path="/settings/compliance" element={<ComplianceSettingsPage />} />
+                  <Route path="/settings/compliance/new" element={<CreateComplianceRulePage />} />
+                  <Route path="/settings/compliance/:ruleId" element={<ComplianceRuleDetailPage />} />
+                </Route>
+
+                {/* njorda_admin only */}
+                <Route element={<RoleRoute roles={["njorda_admin"]} />}>
+                  <Route path="/examples/dashboard" element={<DashboardPage />} />
+                  <Route path="/examples/clients" element={<ClientsPage />} />
+                  <Route path="/examples/settings" element={<SettingsPage />} />
+                </Route>
               </Route>
             </Route>
             <Route element={<DocsLayout />}>
