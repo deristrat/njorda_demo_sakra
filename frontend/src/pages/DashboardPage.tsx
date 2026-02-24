@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function DashboardPage() {
   useEffect(() => {
-    document.title = "Dashboard — Njorda Advisor";
+    document.title = "Dashboard — Säkra";
   }, []);
 
   return (

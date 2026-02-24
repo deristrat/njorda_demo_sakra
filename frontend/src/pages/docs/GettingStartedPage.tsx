@@ -52,7 +52,7 @@ export function GettingStartedPage() {
         <DocsProse>
           <h2>Snabbstart</h2>
           <p>
-            Följ dessa fyra steg för att komma igång med Njorda Advisor. Hela
+            Följ dessa fyra steg för att komma igång med Säkra. Hela
             processen tar bara några minuter.
           </p>
         </DocsProse>

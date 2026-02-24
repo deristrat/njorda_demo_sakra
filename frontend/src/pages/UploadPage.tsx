@@ -43,7 +43,7 @@ export function UploadPage() {
   const [dragActive, setDragActive] = useState(false);
 
   useEffect(() => {
-    document.title = "Ladda upp dokument — Njorda Advisor";
+    document.title = "Ladda upp dokument — Säkra";
   }, []);
 
   const handleFiles = useCallback((newFiles: FileList | null) => {

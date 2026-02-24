@@ -4,7 +4,7 @@ import { ClientsListTable } from "@/components/clients/ClientsListTable";
 
 export function ClientsListPage() {
   useEffect(() => {
-    document.title = "Klienter — Njorda Advisor";
+    document.title = "Klienter — Säkra";
   }, []);
 
   return (

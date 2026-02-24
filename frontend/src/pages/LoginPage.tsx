@@ -16,7 +16,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    document.title = "Logga in — Njorda Advisor";
+    document.title = "Logga in — Säkra";
   }, []);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export function LoginPage() {
         <CardHeader className="items-center space-y-4 pb-2">
           <NjordaLogo />
           <p className="text-sm text-muted-foreground">
-            Logga in på ditt advisorkonto
+            Logga in på ditt konto
           </p>
         </CardHeader>
         <CardContent>

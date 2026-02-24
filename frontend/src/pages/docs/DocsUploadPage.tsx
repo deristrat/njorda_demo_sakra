@@ -42,7 +42,7 @@ export function DocsUploadPage() {
         <DocsProse>
           <h2>Ladda upp dokument</h2>
           <p>
-            Uppladdningssidan är din startpunkt i Njorda Advisor. Härifrån
+            Uppladdningssidan är din startpunkt i Säkra. Härifrån
             laddar du upp rådgivningsdokumentation som systemet sedan granskar
             automatiskt.
           </p>

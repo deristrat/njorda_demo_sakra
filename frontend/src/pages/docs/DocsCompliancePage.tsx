@@ -13,7 +13,7 @@ export function DocsCompliancePage() {
         <DocsProse>
           <h2>Regelefterlevnad</h2>
           <p>
-            Regelefterlevnadsgranskningen är kärnan i Njorda Advisor. Varje
+            Regelefterlevnadsgranskningen är kärnan i Säkra. Varje
             uppladdat dokument utvärderas automatiskt mot en uppsättning regler
             som speglar svenska regulatoriska krav och intern policy.
           </p>

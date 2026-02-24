@@ -4,7 +4,7 @@ import { DocumentsTable } from "@/components/documents/DocumentsTable";
 
 export function DocumentsPage() {
   useEffect(() => {
-    document.title = "Dokument — Njorda Advisor";
+    document.title = "Dokument — Säkra";
   }, []);
 
   return (

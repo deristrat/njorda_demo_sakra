@@ -39,7 +39,7 @@ export function AdvisorDetailPage() {
 
   useEffect(() => {
     if (advisor) {
-      document.title = `${advisor.advisor_name} — Njorda Advisor`;
+      document.title = `${advisor.advisor_name} — Säkra`;
     }
   }, [advisor]);
 

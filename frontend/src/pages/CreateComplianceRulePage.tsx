@@ -61,7 +61,7 @@ export function CreateComplianceRulePage() {
   const [remediation, setRemediation] = useState("");
 
   useEffect(() => {
-    document.title = "Ny regel — Njorda Advisor";
+    document.title = "Ny regel — Säkra";
     fetchComplianceRules().then(setAllRules).catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"));
   }, []);
 

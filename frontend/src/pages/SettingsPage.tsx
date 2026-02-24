@@ -4,7 +4,7 @@ import { ComponentShowcase } from "@/components/settings/ComponentShowcase";
 
 export function SettingsPage() {
   useEffect(() => {
-    document.title = "Inställningar — Njorda Advisor";
+    document.title = "Inställningar — Säkra";
   }, []);
 
   return (

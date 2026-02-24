@@ -25,7 +25,7 @@ import {
 
 export function FontSettingsPage() {
   useEffect(() => {
-    document.title = "Inställningar — Njorda Advisor";
+    document.title = "Inställningar — Säkra";
   }, []);
 
   const [models, setModels] = useState<ExtractorModel[]>([]);

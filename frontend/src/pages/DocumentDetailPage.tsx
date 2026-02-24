@@ -80,7 +80,7 @@ export function DocumentDetailPage() {
 
   useEffect(() => {
     if (doc) {
-      document.title = `${doc.original_filename} — Njorda Advisor`;
+      document.title = `${doc.original_filename} — Säkra`;
     }
   }, [doc]);
 

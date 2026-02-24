@@ -46,7 +46,7 @@ export function ClientDetailPage() {
 
   useEffect(() => {
     if (client) {
-      document.title = `${client.person_name || "Klient"} — Njorda Advisor`;
+      document.title = `${client.person_name || "Klient"} — Säkra`;
     }
   }, [client]);
 

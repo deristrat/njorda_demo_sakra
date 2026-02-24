@@ -4,7 +4,7 @@ import { AdvisorsListTable } from "@/components/advisors/AdvisorsListTable";
 
 export function AdvisorsListPage() {
   useEffect(() => {
-    document.title = "Rådgivare — Njorda Advisor";
+    document.title = "Rådgivare — Säkra";
   }, []);
 
   return (

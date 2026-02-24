@@ -36,9 +36,9 @@ export function DocsHomePage() {
       <DocsHeader title="Dokumentation" />
       <div className="p-6">
         <DocsProse>
-          <h2>Välkommen till Njorda Advisor</h2>
+          <h2>Välkommen till Säkra</h2>
           <p>
-            Njorda Advisor är ett AI-drivet verktyg som hjälper finansiella
+            Säkra är ett AI-drivet verktyg som hjälper finansiella
             rådgivare att säkerställa regelefterlevnad och hantera
             klientdokumentation effektivt. Systemet skannar uppladdade dokument
             och bedömer om de uppfyller gällande krav.

@@ -120,7 +120,7 @@ export function ComplianceRuleDetailPage() {
 
   useEffect(() => {
     if (rule) {
-      document.title = `${rule.name} — Njorda Advisor`;
+      document.title = `${rule.name} — Säkra`;
     }
   }, [rule]);
 

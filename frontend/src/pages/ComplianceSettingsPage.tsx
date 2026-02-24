@@ -53,7 +53,7 @@ export function ComplianceSettingsPage() {
   const [sortBy, setSortBy] = useState<"name" | "points">("name");
 
   useEffect(() => {
-    document.title = "Regelefterlevnad — Njorda Advisor";
+    document.title = "Regelefterlevnad — Säkra";
     Promise.all([fetchComplianceRules(), fetchComplianceThresholds()])
       .then(([ruleData, thresholdData]) => {
         setRules(ruleData);
