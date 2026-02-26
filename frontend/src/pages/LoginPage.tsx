@@ -6,10 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { NjordaLogo } from "@/components/layout/NjordaLogo";
 import { useAuth } from "@/lib/auth";
+import { getDefaultPath } from "@/lib/navigation";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, effectiveRole, login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -20,7 +21,7 @@ export function LoginPage() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/", { replace: true });
+    if (isAuthenticated) navigate(getDefaultPath(effectiveRole), { replace: true });
   }, [isAuthenticated, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -28,8 +29,8 @@ export function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await login(username, password);
-      navigate("/");
+      const userRole = await login(username, password);
+      navigate(getDefaultPath(userRole));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Inloggningen misslyckades");
     } finally {

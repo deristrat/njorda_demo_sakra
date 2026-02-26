@@ -18,7 +18,7 @@ interface AuthState {
   isImpersonating: boolean;
   impersonatingAs: ImpersonatingAs | null;
   effectiveRole: UserRole | null;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<UserRole>;
   logout: () => Promise<void>;
   startImpersonation: (userId: number) => Promise<void>;
   stopImpersonation: () => Promise<void>;
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token) refreshMe();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const login = async (user: string, password: string) => {
+  const login = async (user: string, password: string): Promise<UserRole> => {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -110,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAdvisorId(data.advisor_id);
     setIsImpersonating(false);
     setImpersonatingAs(null);
+    return data.role;
   };
 
   const logout = async () => {

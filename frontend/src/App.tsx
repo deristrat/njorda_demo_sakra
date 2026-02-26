@@ -8,6 +8,11 @@ import { LoginPage } from "@/pages/LoginPage";
 import { UploadPage } from "@/pages/UploadPage";
 import { DocumentsPage } from "@/pages/DocumentsPage";
 import { DocumentDetailPage } from "@/pages/DocumentDetailPage";
+import { ComplianceStartPage } from "@/pages/ComplianceStartPage";
+import { AdvisorStartPage } from "@/pages/AdvisorStartPage";
+import { InboxPage } from "@/pages/InboxPage";
+import { AuditPage } from "@/pages/AuditPage";
+import { ComplianceReportPage } from "@/pages/ComplianceReportPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ClientsPage } from "@/pages/ClientsPage";
 import { ClientsListPage } from "@/pages/ClientsListPage";
@@ -40,8 +45,14 @@ function ProtectedRoute() {
 function RoleRoute({ roles }: { roles: UserRole[] }) {
   const { isAuthenticated, effectiveRole } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (!effectiveRole || !roles.includes(effectiveRole)) return <Navigate to="/" replace />;
+  if (!effectiveRole || !roles.includes(effectiveRole)) return <Navigate to="/start" replace />;
   return <Outlet />;
+}
+
+function StartPage() {
+  const { effectiveRole } = useAuth();
+  if (effectiveRole === "advisor") return <AdvisorStartPage />;
+  return <ComplianceStartPage />;
 }
 
 export default function App() {
@@ -54,7 +65,10 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 {/* All authenticated users */}
-                <Route path="/" element={<UploadPage />} />
+                <Route path="/" element={<Navigate to="/start" replace />} />
+                <Route path="/start" element={<StartPage />} />
+                <Route path="/inbox" element={<InboxPage />} />
+                <Route path="/archive" element={<DocumentsPage />} />
                 <Route path="/documents" element={<DocumentsPage />} />
                 <Route path="/documents/:id" element={<DocumentDetailPage />} />
                 <Route path="/clients" element={<ClientsListPage />} />
@@ -64,6 +78,8 @@ export default function App() {
 
                 {/* compliance + njorda_admin only */}
                 <Route element={<RoleRoute roles={["compliance", "njorda_admin"]} />}>
+                  <Route path="/audit" element={<AuditPage />} />
+                  <Route path="/reports/compliance" element={<ComplianceReportPage />} />
                   <Route path="/settings" element={<FontSettingsPage />} />
                   <Route path="/settings/compliance" element={<ComplianceSettingsPage />} />
                   <Route path="/settings/compliance/new" element={<CreateComplianceRulePage />} />

@@ -14,6 +14,7 @@ from src.routers import (
     documents,
     settings,
     compliance,
+    chat,
 )
 
 
@@ -47,3 +48,4 @@ app.include_router(charts.router)
 app.include_router(documents.router)
 app.include_router(settings.router)
 app.include_router(compliance.router)
+app.include_router(chat.router)
