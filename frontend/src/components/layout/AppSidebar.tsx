@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import {
-  Upload,
   FileText,
   LayoutDashboard,
   Users,
@@ -170,17 +169,15 @@ export function AppSidebar() {
 
   const handleImpersonate = async (userId: number) => {
     try {
-      const targetUser = users.find((u) => u.id === userId);
       await startImpersonation(userId);
-      const targetRole = (targetUser?.role ?? "advisor") as UserRole;
-      navigate(getDefaultPath(targetRole));
+      navigate(getDefaultPath());
     } catch { /* ignore */ }
   };
 
   const handleStopImpersonation = async () => {
     try {
       await stopImpersonation();
-      navigate(getDefaultPath(role));
+      navigate(getDefaultPath());
     } catch { /* ignore */ }
   };
 

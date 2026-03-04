@@ -10,7 +10,7 @@ import { getDefaultPath } from "@/lib/navigation";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, effectiveRole, login } = useAuth();
+  const { isAuthenticated, login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +21,7 @@ export function LoginPage() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) navigate(getDefaultPath(effectiveRole), { replace: true });
+    if (isAuthenticated) navigate(getDefaultPath(), { replace: true });
   }, [isAuthenticated, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -29,8 +29,8 @@ export function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const userRole = await login(username, password);
-      navigate(getDefaultPath(userRole));
+      await login(username, password);
+      navigate(getDefaultPath());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Inloggningen misslyckades");
     } finally {

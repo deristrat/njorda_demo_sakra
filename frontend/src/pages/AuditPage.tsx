@@ -52,13 +52,6 @@ const EVENT_TYPE_OPTIONS = [
   { value: "user.login", label: "Inloggning" },
 ];
 
-function targetLink(targetType: string | null, targetId: string | null): string | null {
-  if (!targetType || !targetId) return null;
-  if (targetType === "document") return `/documents/${targetId}`;
-  if (targetType === "rule") return `/settings/compliance/${targetId}`;
-  return null;
-}
-
 const columns: ColumnDef<AuditEventListItem>[] = [
   {
     accessorKey: "created_at",

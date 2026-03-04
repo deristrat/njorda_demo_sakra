@@ -6,7 +6,6 @@ import { ChatProvider } from "@/lib/chat-context";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DocsLayout } from "@/components/docs/DocsLayout";
 import { LoginPage } from "@/pages/LoginPage";
-import { UploadPage } from "@/pages/UploadPage";
 import { DocumentsPage } from "@/pages/DocumentsPage";
 import { DocumentDetailPage } from "@/pages/DocumentDetailPage";
 import { ComplianceStartPage } from "@/pages/ComplianceStartPage";
