@@ -282,6 +282,41 @@ export async function fetchRuleHistory(ruleId: string): Promise<AuditEntry[]> {
   return res.json();
 }
 
+// --- Audit Events (system-wide) ---
+
+export interface AuditEventListItem {
+  id: number;
+  event_type: string;
+  actor: string;
+  target_type: string | null;
+  target_id: string | null;
+  summary: string;
+  created_at: string;
+}
+
+export interface AuditEventDetail extends AuditEventListItem {
+  detail: Record<string, unknown> | null;
+}
+
+export async function fetchAuditEvents(params?: {
+  event_type?: string;
+  search?: string;
+}): Promise<AuditEventListItem[]> {
+  const query = new URLSearchParams();
+  if (params?.event_type) query.set("event_type", params.event_type);
+  if (params?.search) query.set("search", params.search);
+  const qs = query.toString();
+  const res = await apiFetch(`/api/audit${qs ? `?${qs}` : ""}`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta händelser"));
+  return res.json();
+}
+
+export async function fetchAuditEvent(id: number): Promise<AuditEventDetail> {
+  const res = await apiFetch(`/api/audit/${id}`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta händelse"));
+  return res.json();
+}
+
 // --- Create rule ---
 
 export async function createComplianceRule(

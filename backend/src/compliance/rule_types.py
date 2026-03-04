@@ -6,11 +6,17 @@ stored in the database. A small set of rule types covers all compliance rules.
 
 from __future__ import annotations
 
+import json
+import logging
 from typing import Any, Callable
+
+import anthropic
 
 from src.compliance.field_resolver import resolve_field_path
 from src.compliance.models import Finding
 from src.extraction.models import ExtractionResult
+
+log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Rule type registry
@@ -91,16 +97,74 @@ def check_require_field_on_items(
     return findings
 
 
+AI_MODEL = "claude-haiku-4-5-20251001"
+
+_AI_SYSTEM = (
+    "Du är en compliance-granskare för svenska finansiella rådgivningsdokument. "
+    "Du får extraherad data från ett rådgivningsdokument och en granskningsfråga. "
+    "Svara ALLTID med giltig JSON i exakt detta format:\n"
+    '{"passed": true/false, "reason": "kort motivering"}\n'
+    "Svara BARA med JSON, ingen annan text."
+)
+
+
 @rule_type("ai_evaluate")
 def check_ai_evaluate(
     data: ExtractionResult, params: dict[str, Any], rule_name: str
 ) -> list[Finding]:
-    """Placeholder for LLM-based evaluation. Returns empty (pass) for now.
+    """LLM-based compliance evaluation using Claude."""
+    prompt = params.get("prompt", "")
+    context_fields = params.get("context_fields", [])
 
-    Tier 2 rules will be implemented in a later step with actual LLM calls.
-    """
-    # TODO: Implement LLM evaluation in step 10
-    return []
+    # Build context from specified fields
+    context_parts = {}
+    for field in context_fields:
+        value = resolve_field_path(data, field)
+        if value is not None:
+            if hasattr(value, "model_dump"):
+                context_parts[field] = value.model_dump(mode="json")
+            elif isinstance(value, list):
+                context_parts[field] = [
+                    item.model_dump(mode="json") if hasattr(item, "model_dump") else item
+                    for item in value
+                ]
+            else:
+                context_parts[field] = value
+
+    user_message = (
+        f"Granskningsfråga: {prompt}\n\n"
+        f"Dokumentdata:\n{json.dumps(context_parts, ensure_ascii=False, indent=2, default=str)}"
+    )
+
+    try:
+        client = anthropic.Anthropic()
+        response = client.messages.create(
+            model=AI_MODEL,
+            max_tokens=256,
+            system=_AI_SYSTEM,
+            messages=[{"role": "user", "content": user_message}],
+        )
+
+        text = response.content[0].text.strip()
+        # Strip markdown code fences if present
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+            if text.endswith("```"):
+                text = text[:-3].strip()
+        result = json.loads(text)
+
+        if not result.get("passed", True):
+            return [
+                Finding(
+                    message=f"{rule_name}: {result.get('reason', '')}",
+                    context={"ai_evaluation": True},
+                )
+            ]
+        return []
+
+    except Exception as exc:
+        log.warning("ai_evaluate failed for rule %s: %s", rule_name, exc)
+        return []
 
 
 @rule_type("custom")

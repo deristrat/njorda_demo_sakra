@@ -30,7 +30,10 @@ def list_advisors(
             .label("avg_compliance_score"),
             func.count(distinct(Document.client_id))
             .filter(Document.compliance_status == "red")
-            .label("clients_with_issues"),
+            .label("clients_with_issues_red"),
+            func.count(distinct(Document.client_id))
+            .filter(Document.compliance_status == "yellow")
+            .label("clients_with_issues_yellow"),
             func.max(Document.created_at).label("latest_document_date"),
         )
         .where(Document.advisor_id.is_not(None))
@@ -43,8 +46,11 @@ def list_advisors(
         func.coalesce(doc_stats.c.document_count, 0).label("document_count"),
         func.coalesce(doc_stats.c.client_count, 0).label("client_count"),
         doc_stats.c.avg_compliance_score,
-        func.coalesce(doc_stats.c.clients_with_issues, 0).label(
-            "clients_with_issues"
+        func.coalesce(doc_stats.c.clients_with_issues_red, 0).label(
+            "clients_with_issues_red"
+        ),
+        func.coalesce(doc_stats.c.clients_with_issues_yellow, 0).label(
+            "clients_with_issues_yellow"
         ),
         doc_stats.c.latest_document_date,
     ).outerjoin(doc_stats, Advisor.id == doc_stats.c.advisor_id)
@@ -66,12 +72,13 @@ def list_advisors(
             "avg_compliance_score": (
                 round(avg_score) if avg_score is not None else None
             ),
-            "clients_with_issues": issues,
+            "clients_with_issues_red": issues_red,
+            "clients_with_issues_yellow": issues_yellow,
             "latest_document_date": (
                 latest_date.isoformat() if latest_date else None
             ),
         }
-        for advisor, doc_count, client_count, avg_score, issues, latest_date in rows
+        for advisor, doc_count, client_count, avg_score, issues_red, issues_yellow, latest_date in rows
     ]
 
 

@@ -35,7 +35,10 @@ def list_clients(
             func.count(Document.id).label("document_count"),
             func.count()
             .filter(Document.compliance_status == "red")
-            .label("compliance_issues"),
+            .label("compliance_issues_red"),
+            func.count()
+            .filter(Document.compliance_status == "yellow")
+            .label("compliance_issues_yellow"),
             func.max(Document.created_at).label("latest_document_date"),
         )
         .where(Document.client_id.is_not(None))
@@ -50,7 +53,8 @@ def list_clients(
     query = select(
         Client,
         func.coalesce(doc_stats.c.document_count, 0).label("document_count"),
-        func.coalesce(doc_stats.c.compliance_issues, 0).label("compliance_issues"),
+        func.coalesce(doc_stats.c.compliance_issues_red, 0).label("compliance_issues_red"),
+        func.coalesce(doc_stats.c.compliance_issues_yellow, 0).label("compliance_issues_yellow"),
         doc_stats.c.latest_document_date,
     ).outerjoin(doc_stats, Client.id == doc_stats.c.client_id)
 
@@ -68,12 +72,13 @@ def list_clients(
             "email": client.email,
             "phone": client.phone,
             "document_count": doc_count,
-            "compliance_issues": issues,
+            "compliance_issues_red": red,
+            "compliance_issues_yellow": yellow,
             "latest_document_date": (
                 latest_date.isoformat() if latest_date else None
             ),
         }
-        for client, doc_count, issues, latest_date in rows
+        for client, doc_count, red, yellow, latest_date in rows
     ]
 
 

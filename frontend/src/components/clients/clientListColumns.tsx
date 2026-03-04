@@ -60,7 +60,7 @@ export const clientListColumns: ColumnDef<Client>[] = [
     },
   },
   {
-    accessorKey: "compliance_issues",
+    accessorKey: "compliance_issues_red",
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -72,12 +72,37 @@ export const clientListColumns: ColumnDef<Client>[] = [
       </Button>
     ),
     cell: ({ row }) => {
-      const issues = row.getValue("compliance_issues") as number;
+      const issues = row.getValue("compliance_issues_red") as number;
       if (issues === 0) {
         return <span className="text-muted-foreground">0</span>;
       }
       return (
         <span className="inline-flex items-center gap-1 text-destructive font-medium">
+          <AlertTriangle className="size-3.5" />
+          {issues}
+        </span>
+      );
+    },
+  },
+  {
+    accessorKey: "compliance_issues_yellow",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        className="-ml-3 h-8 text-xs"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Varningar
+        <ArrowUpDown className="ml-1 size-3" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const issues = row.getValue("compliance_issues_yellow") as number;
+      if (issues === 0) {
+        return <span className="text-muted-foreground">0</span>;
+      }
+      return (
+        <span className="inline-flex items-center gap-1 text-amber-600 font-medium">
           <AlertTriangle className="size-3.5" />
           {issues}
         </span>

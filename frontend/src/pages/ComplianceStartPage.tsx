@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
 import {
   FileText,
   Users,
@@ -7,16 +6,26 @@ import {
   ShieldCheck,
   AlertTriangle,
   CheckCircle2,
-  ArrowRight,
 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { AdvisorChat } from "@/components/chat/AdvisorChat";
 import { fetchDocuments, fetchAdvisors, fetchClients } from "@/lib/api";
+import { useChat } from "@/lib/chat-context";
 import type { DocumentSummary, Advisor, Client } from "@/types";
 
+const COMPLIANCE_SUGGESTIONS = [
+  "Vilka rådgivare har lägst compliance?",
+  "Visa dokument med allvarliga avvikelser",
+  "Ge en överblick över compliance-läget",
+];
+
+const COMPLIANCE_SUBTITLE =
+  "Fråga om rådgivare, dokument eller compliance-status för hela organisationen";
+
 export function ComplianceStartPage() {
-  const navigate = useNavigate();
+  const { messages } = useChat();
+  const chatActive = messages.length > 0;
   const [docs, setDocs] = useState<DocumentSummary[]>([]);
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -41,7 +50,7 @@ export function ComplianceStartPage() {
   const yellowDocs = docs.filter((d) => d.compliance_status === "yellow").length;
   const complianceRate =
     reviewedDocs > 0 ? Math.round((greenDocs / reviewedDocs) * 100) : 0;
-  const clientsWithIssues = clients.filter((c) => c.compliance_issues > 0).length;
+  const clientsWithIssues = clients.filter((c) => c.compliance_issues_red > 0 || c.compliance_issues_yellow > 0).length;
 
   const statCards = [
     {
@@ -88,26 +97,42 @@ export function ComplianceStartPage() {
     },
   ];
 
-  const quickActions = [
-    {
-      label: "Granska dokument",
-      description: "Se alla uppladdade dokument och deras compliance-status",
-      path: "/documents",
-      icon: FileText,
-    },
-    {
-      label: "Rådgivaröversikt",
-      description: "Se rådgivare och deras compliance-poäng",
-      path: "/advisors",
-      icon: Briefcase,
-    },
-    {
-      label: "Regelmotor",
-      description: "Hantera och konfigurera compliance-regler",
-      path: "/settings/compliance",
-      icon: ShieldCheck,
-    },
-  ];
+  if (chatActive) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <AppHeader title="Start" />
+        <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
+          <div className="grid flex-none gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {statCards.map((card) => (
+              <Card key={card.label}>
+                <CardContent className="flex items-center gap-3 p-3">
+                  <div
+                    className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${card.color}`}
+                  >
+                    <card.icon className="size-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">{card.label}</p>
+                    <p className="font-brand text-lg leading-tight tracking-tight">
+                      {loading ? "—" : card.value}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col">
+            <AdvisorChat
+              expanded
+              suggestions={COMPLIANCE_SUGGESTIONS}
+              subtitle={COMPLIANCE_SUBTITLE}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -137,33 +162,15 @@ export function ComplianceStartPage() {
           ))}
         </div>
 
-        {/* Quick actions */}
+        {/* AI Assistant */}
         <div>
           <h2 className="mb-3 font-brand text-sm font-medium text-muted-foreground">
-            Snabbåtgärder
+            AI Assistent
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {quickActions.map((action) => (
-              <Card
-                key={action.path}
-                className="cursor-pointer transition-colors hover:bg-muted/50"
-                onClick={() => navigate(action.path)}
-              >
-                <CardContent className="flex items-center gap-4 p-5">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                    <action.icon className="size-5 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-sm">{action.label}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {action.description}
-                    </p>
-                  </div>
-                  <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <AdvisorChat
+            suggestions={COMPLIANCE_SUGGESTIONS}
+            subtitle={COMPLIANCE_SUBTITLE}
+          />
         </div>
       </div>
     </>

@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from src.audit import record_audit_event
 from src.auth import (
     TokenInfo,
     create_token,
@@ -96,6 +97,16 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse:
         advisor_id=advisor_id,
     )
     token = create_token(info)
+
+    record_audit_event(
+        db,
+        event_type="user.login",
+        actor=user.username,
+        summary=f"{user.name or user.username} loggade in",
+        target_type="user",
+        target_id=str(user.id),
+    )
+    db.commit()
 
     return LoginResponse(
         token=token,

@@ -5,10 +5,11 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from sqlalchemy import exists, func, select
+from sqlalchemy import distinct, exists, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from src.auth import TokenInfo
+from src.models.advisor import Advisor
 from src.models.client import Client
 from src.models.document import Document, DocumentExtraction
 
@@ -95,6 +96,44 @@ TOOL_DEFINITIONS: list[dict] = [
 
 
 # ---------------------------------------------------------------------------
+# Extra tools for compliance / admin roles
+# ---------------------------------------------------------------------------
+
+COMPLIANCE_EXTRA_TOOLS: list[dict] = [
+    {
+        "name": "list_advisors",
+        "description": "Lista alla rådgivare med compliance-statistik (antal dokument, klienter, snittpoäng, klienter med avvikelser).",
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
+    {
+        "name": "get_advisor_documents",
+        "description": "Hämta alla dokument för en specifik rådgivare.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "advisor_id": {
+                    "type": "integer",
+                    "description": "Rådgivarens ID",
+                },
+            },
+            "required": ["advisor_id"],
+        },
+    },
+]
+
+
+def get_tools_for_role(role: str) -> list[dict]:
+    """Return tool definitions appropriate for the given role."""
+    if role == "advisor":
+        return TOOL_DEFINITIONS
+    return TOOL_DEFINITIONS + COMPLIANCE_EXTRA_TOOLS
+
+
+# ---------------------------------------------------------------------------
 # Tool executors
 # ---------------------------------------------------------------------------
 
@@ -134,7 +173,10 @@ def _list_clients(_input: dict, db: Session, user: TokenInfo) -> Any:
             func.count(Document.id).label("document_count"),
             func.count()
             .filter(Document.compliance_status == "red")
-            .label("compliance_issues"),
+            .label("compliance_issues_red"),
+            func.count()
+            .filter(Document.compliance_status == "yellow")
+            .label("compliance_issues_yellow"),
             func.max(Document.created_at).label("latest_document_date"),
         )
         .where(Document.client_id.is_not(None))
@@ -146,7 +188,8 @@ def _list_clients(_input: dict, db: Session, user: TokenInfo) -> Any:
     query = select(
         Client,
         func.coalesce(doc_stats.c.document_count, 0).label("document_count"),
-        func.coalesce(doc_stats.c.compliance_issues, 0).label("compliance_issues"),
+        func.coalesce(doc_stats.c.compliance_issues_red, 0).label("compliance_issues_red"),
+        func.coalesce(doc_stats.c.compliance_issues_yellow, 0).label("compliance_issues_yellow"),
         doc_stats.c.latest_document_date,
     ).outerjoin(doc_stats, Client.id == doc_stats.c.client_id)
 
@@ -162,10 +205,11 @@ def _list_clients(_input: dict, db: Session, user: TokenInfo) -> Any:
             "email": c.email,
             "phone": c.phone,
             "document_count": dc,
-            "compliance_issues": ci,
+            "compliance_issues_red": red,
+            "compliance_issues_yellow": yellow,
             "latest_document_date": ld.isoformat() if ld else None,
         }
-        for c, dc, ci, ld in rows
+        for c, dc, red, yellow, ld in rows
     ]
 
 
@@ -304,6 +348,74 @@ def _get_document_compliance(input: dict, db: Session, user: TokenInfo) -> Any:
     return report.model_dump(mode="json")
 
 
+def _list_advisors(_input: dict, db: Session, user: TokenInfo) -> Any:
+    doc_stats = (
+        select(
+            Document.advisor_id,
+            func.count(Document.id).label("document_count"),
+            func.count(distinct(Document.client_id)).label("client_count"),
+            func.avg(Document.compliance_score)
+            .filter(Document.status == "completed")
+            .label("avg_compliance_score"),
+            func.count(distinct(Document.client_id))
+            .filter(Document.compliance_status == "red")
+            .label("clients_with_issues_red"),
+            func.count(distinct(Document.client_id))
+            .filter(Document.compliance_status == "yellow")
+            .label("clients_with_issues_yellow"),
+        )
+        .where(Document.advisor_id.is_not(None))
+        .group_by(Document.advisor_id)
+        .subquery()
+    )
+
+    query = select(
+        Advisor,
+        func.coalesce(doc_stats.c.document_count, 0).label("document_count"),
+        func.coalesce(doc_stats.c.client_count, 0).label("client_count"),
+        doc_stats.c.avg_compliance_score,
+        func.coalesce(doc_stats.c.clients_with_issues_red, 0).label("clients_with_issues_red"),
+        func.coalesce(doc_stats.c.clients_with_issues_yellow, 0).label("clients_with_issues_yellow"),
+    ).outerjoin(doc_stats, Advisor.id == doc_stats.c.advisor_id)
+
+    rows = db.execute(query).all()
+    return [
+        {
+            "id": advisor.id,
+            "advisor_name": advisor.advisor_name,
+            "firm_name": advisor.firm_name,
+            "document_count": doc_count,
+            "client_count": client_count,
+            "avg_compliance_score": round(avg_score) if avg_score is not None else None,
+            "clients_with_issues_red": issues_red,
+            "clients_with_issues_yellow": issues_yellow,
+        }
+        for advisor, doc_count, client_count, avg_score, issues_red, issues_yellow in rows
+    ]
+
+
+def _get_advisor_documents(input: dict, db: Session, user: TokenInfo) -> Any:
+    advisor_id = input["advisor_id"]
+    advisor = db.execute(
+        select(Advisor).where(Advisor.id == advisor_id)
+    ).scalar_one_or_none()
+    if not advisor:
+        return {"error": "Rådgivaren hittades inte"}
+
+    docs = (
+        db.execute(
+            select(Document)
+            .options(joinedload(Document.extractions))
+            .where(Document.advisor_id == advisor_id)
+            .order_by(Document.created_at.desc())
+        )
+        .unique()
+        .scalars()
+        .all()
+    )
+    return [_doc_summary(doc) for doc in docs]
+
+
 _EXECUTORS = {
     "list_clients": _list_clients,
     "get_client_detail": _get_client_detail,
@@ -311,6 +423,8 @@ _EXECUTORS = {
     "list_documents": _list_documents,
     "get_document_detail": _get_document_detail,
     "get_document_compliance": _get_document_compliance,
+    "list_advisors": _list_advisors,
+    "get_advisor_documents": _get_advisor_documents,
 }
 
 # Swedish labels for tool names (used by frontend)
@@ -321,4 +435,6 @@ TOOL_LABELS = {
     "list_documents": "Hämtar dokumentlista",
     "get_document_detail": "Hämtar dokumentdetaljer",
     "get_document_compliance": "Hämtar compliance-rapport",
+    "list_advisors": "Hämtar rådgivarlista",
+    "get_advisor_documents": "Hämtar rådgivarens dokument",
 }

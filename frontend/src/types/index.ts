@@ -15,7 +15,8 @@ export interface Client {
   email: string | null;
   phone: string | null;
   document_count: number;
-  compliance_issues: number;
+  compliance_issues_red: number;
+  compliance_issues_yellow: number;
   latest_document_date: string | null;
 }
 
@@ -75,7 +76,8 @@ export interface Advisor {
   document_count: number;
   client_count: number;
   avg_compliance_score: number | null;
-  clients_with_issues: number;
+  clients_with_issues_red: number;
+  clients_with_issues_yellow: number;
   latest_document_date: string | null;
 }
 

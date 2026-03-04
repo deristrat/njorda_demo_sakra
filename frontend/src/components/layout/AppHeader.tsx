@@ -10,7 +10,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ title }: AppHeaderProps) {
   return (
-    <header className="flex h-14 items-center gap-3 border-b border-border bg-card px-4">
+    <header className="flex h-10 items-center gap-3 border-b border-border bg-card px-3">
       <SidebarTrigger />
       <Separator orientation="vertical" className="h-5" />
       <h1 className="font-brand text-base tracking-tight">{title}</h1>
@@ -26,9 +26,7 @@ export function AppHeader({ title }: AppHeaderProps) {
           variant="ghost"
           size="icon"
           onClick={() =>
-            toast.info("Du har 3 olästa notifieringar", {
-              description: "Klicka för att visa alla",
-            })
+            toast.info("Inga nya notifieringar")
           }
         >
           <Bell className="size-4" />

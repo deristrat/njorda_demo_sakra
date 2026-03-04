@@ -6,11 +6,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AdvisorChat } from "@/components/chat/AdvisorChat";
 import { fetchDocuments, fetchClients } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useChat } from "@/lib/chat-context";
 import type { DocumentSummary, Client } from "@/types";
 
 export function AdvisorStartPage() {
   const navigate = useNavigate();
-  const { name } = useAuth();
+  const { name, isImpersonating, impersonatingAs } = useAuth();
+  const displayName = isImpersonating && impersonatingAs
+    ? impersonatingAs.name
+    : name;
+  const { messages } = useChat();
+  const chatActive = messages.length > 0;
   const [docs, setDocs] = useState<DocumentSummary[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,13 +75,50 @@ export function AdvisorStartPage() {
   ];
 
 
+  if (chatActive) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <AppHeader title="Start" />
+        <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
+          <div className="grid flex-none gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {statCards.map((card) => (
+              <Card
+                key={card.label}
+                className="cursor-pointer transition-colors hover:bg-muted/50"
+                onClick={() => navigate(card.path)}
+              >
+                <CardContent className="flex items-center gap-3 p-3">
+                  <div
+                    className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${card.color}`}
+                  >
+                    <card.icon className="size-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">{card.label}</p>
+                    <p className="font-brand text-lg leading-tight tracking-tight">
+                      {loading ? "—" : card.value}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col">
+            <AdvisorChat expanded />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <AppHeader title="Start" />
       <div className="space-y-6 p-6">
         <div className="py-4">
           <h1 className="font-brand text-2xl tracking-tight">
-            Välkommen tillbaka{name ? `, ${name.split(" ")[0]}` : ""}
+            Välkommen tillbaka{displayName ? `, ${displayName.split(" ")[0]}` : ""}
           </h1>
         </div>
 

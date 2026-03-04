@@ -12,8 +12,8 @@ from sqlalchemy.orm import Session
 from src.auth import TokenInfo, get_effective_user
 from src.database import get_db
 from src.ai.session import create_session, get_session, delete_session
-from src.ai.prompt import SYSTEM_PROMPT
-from src.ai.tools import TOOL_DEFINITIONS
+from src.ai.prompt import get_system_prompt
+from src.ai.tools import get_tools_for_role
 from src.ai.anthropic_chat import stream_response
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
@@ -55,8 +55,8 @@ async def chat(
         try:
             async for event in stream_response(
                 messages=messages,
-                system=SYSTEM_PROMPT,
-                tools=TOOL_DEFINITIONS,
+                system=get_system_prompt(user.effective_role),
+                tools=get_tools_for_role(user.effective_role),
                 db=db,
                 user=user,
             ):

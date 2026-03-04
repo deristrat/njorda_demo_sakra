@@ -21,6 +21,7 @@ from src.models.app_settings import get_setting
 from src.models.advisor import link_document_to_advisor
 from src.models.client import Client, link_document_to_client
 from src.models.document import Document, DocumentExtraction
+from src.audit import record_audit_event
 from src.routers.compliance import run_compliance_for_document
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
@@ -93,6 +94,14 @@ async def upload_documents(
             }
         )
 
+    record_audit_event(
+        db,
+        event_type="document.uploaded",
+        actor=user.effective_username,
+        summary=f"Laddade upp {len(results)} dokument",
+        target_type="document",
+        detail={"filenames": [r["filename"] for r in results]},
+    )
     db.commit()
     return {"documents": results}
 
@@ -234,6 +243,8 @@ def delete_documents(
         for doc in docs:
             _check_doc_ownership(doc, user)
 
+    filenames = [doc.original_filename for doc in docs]
+
     for doc in docs:
         # Delete the file from disk
         file_path = settings.upload_dir / doc.stored_filename
@@ -247,6 +258,14 @@ def delete_documents(
         )
         db.delete(doc)
 
+    record_audit_event(
+        db,
+        event_type="document.deleted",
+        actor=user.effective_username,
+        summary=f"Tog bort {len(docs)} dokument",
+        target_type="document",
+        detail={"filenames": filenames},
+    )
     db.commit()
     return {"deleted": len(docs)}
 
@@ -279,6 +298,15 @@ def bulk_recheck_compliance(
         except Exception as exc:
             results.append({"id": doc.id, "status": "error", "message": str(exc)})
 
+    record_audit_event(
+        db,
+        event_type="compliance.recheck",
+        actor=user.effective_username,
+        summary=f"Kontrollerade om {len(docs)} dokument",
+        target_type="document",
+        detail={"document_ids": ids},
+    )
+    db.commit()
     return {"results": results}
 
 

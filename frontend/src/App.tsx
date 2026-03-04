@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { ChatProvider } from "@/lib/chat-context";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DocsLayout } from "@/components/docs/DocsLayout";
 import { LoginPage } from "@/pages/LoginPage";
@@ -12,6 +13,7 @@ import { ComplianceStartPage } from "@/pages/ComplianceStartPage";
 import { AdvisorStartPage } from "@/pages/AdvisorStartPage";
 import { InboxPage } from "@/pages/InboxPage";
 import { AuditPage } from "@/pages/AuditPage";
+import { AuditEventDetailPage } from "@/pages/AuditEventDetailPage";
 import { ComplianceReportPage } from "@/pages/ComplianceReportPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ClientsPage } from "@/pages/ClientsPage";
@@ -59,6 +61,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ChatProvider>
         <TooltipProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
@@ -79,6 +82,7 @@ export default function App() {
                 {/* compliance + njorda_admin only */}
                 <Route element={<RoleRoute roles={["compliance", "njorda_admin"]} />}>
                   <Route path="/audit" element={<AuditPage />} />
+                  <Route path="/audit/:id" element={<AuditEventDetailPage />} />
                   <Route path="/reports/compliance" element={<ComplianceReportPage />} />
                   <Route path="/settings" element={<FontSettingsPage />} />
                   <Route path="/settings/compliance" element={<ComplianceSettingsPage />} />
@@ -109,6 +113,7 @@ export default function App() {
           </Routes>
           <Toaster richColors position="bottom-right" />
         </TooltipProvider>
+        </ChatProvider>
       </AuthProvider>
     </BrowserRouter>
   );

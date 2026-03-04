@@ -8,8 +8,9 @@ from src.models import User
 SEED_USERS = [
     {"username": "admin", "password": "admin", "role": "njorda_admin", "name": "Admin Njorda", "email": "admin@njorda.se"},
     {"username": "maria", "password": "demo", "role": "compliance", "name": "Maria Karlsson", "email": "maria@sakra.se"},
-    {"username": "erik", "password": "demo", "role": "advisor", "name": "Erik Lindqvist", "email": "erik@sakra.se"},
-    {"username": "anna", "password": "demo", "role": "advisor", "name": "Anna Svensson", "email": "anna@sakra.se"},
+    {"username": "johan", "password": "demo", "role": "advisor", "name": "Johan Berg", "email": "johan@sakra.se"},
+    {"username": "karin", "password": "demo", "role": "advisor", "name": "Karin Ek", "email": "karin@sakra.se"},
+    {"username": "anna", "password": "demo", "role": "advisor", "name": "Anna Lindgren", "email": "anna@sakra.se"},
 ]
 
 
@@ -39,14 +40,15 @@ def seed() -> None:
                 db.add(user)
                 print(f"Created user '{u['username']}' (role={u['role']}).")
 
-        # Remove old 'demo' user if it exists and isn't one of the seed users
+        # Remove stale users not in the current seed set
         seed_usernames = {u["username"] for u in SEED_USERS}
-        old_demo = db.execute(
-            select(User).where(User.username == "demo")
-        ).scalar_one_or_none()
-        if old_demo and old_demo.username not in seed_usernames:
-            db.delete(old_demo)
-            print("Removed old 'demo' user.")
+        for stale_name in ["demo", "erik"]:
+            stale = db.execute(
+                select(User).where(User.username == stale_name)
+            ).scalar_one_or_none()
+            if stale and stale.username not in seed_usernames:
+                db.delete(stale)
+                print(f"Removed old '{stale_name}' user.")
 
         db.commit()
     finally:

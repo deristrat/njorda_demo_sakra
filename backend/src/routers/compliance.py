@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
+from src.audit import record_audit_event
 from src.auth import TokenInfo, get_current_user_optional, get_effective_user
 from src.compliance.audit import record_rule_audit, rule_to_dict
 from src.compliance.engine import (
@@ -302,6 +303,15 @@ def create_rule(
         db, rule.rule_id, "created", user.effective_username,
         None, rule_to_dict(rule),
     )
+    record_audit_event(
+        db,
+        event_type="rule.created",
+        actor=user.effective_username,
+        summary=f"Skapade regel {rule.rule_id}",
+        target_type="rule",
+        target_id=rule.rule_id,
+        detail=rule_to_dict(rule),
+    )
     db.commit()
 
     return RuleResponse(
@@ -384,6 +394,15 @@ def update_rule(
     record_rule_audit(
         db, rule_id, "updated", user.effective_username,
         old_values, rule_to_dict(rule),
+    )
+    record_audit_event(
+        db,
+        event_type="rule.updated",
+        actor=user.effective_username,
+        summary=f"Uppdaterade regel {rule_id}",
+        target_type="rule",
+        target_id=rule_id,
+        detail={"old": old_values, "new": rule_to_dict(rule)},
     )
     db.commit()
 

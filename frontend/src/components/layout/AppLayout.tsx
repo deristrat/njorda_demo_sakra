@@ -35,9 +35,11 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="max-h-dvh overflow-hidden">
         <ImpersonationBanner />
-        <Outlet />
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <Outlet />
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
