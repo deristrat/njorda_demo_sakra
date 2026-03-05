@@ -30,6 +30,8 @@ import { fetchDocument, getDocumentFileUrl } from "@/lib/api";
 import { formatDate, formatSEK } from "@/lib/utils";
 import { toast } from "sonner";
 import { CompliancePanel } from "@/components/compliance/CompliancePanel";
+import { SendCommentDialog } from "@/components/notifications/SendCommentDialog";
+import { useAuth } from "@/lib/auth";
 import type { DocumentDetail, ExtractionData } from "@/types";
 
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -66,6 +68,7 @@ const STATUS_LABELS: Record<string, string> = {
 export function DocumentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { effectiveRole } = useAuth();
   const [doc, setDoc] = useState<DocumentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPdfPane, setShowPdfPane] = useState(false);
@@ -161,6 +164,13 @@ export function DocumentDetailPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            {effectiveRole !== "advisor" && doc.status === "completed" && (
+              <SendCommentDialog
+                documentId={doc.id}
+                documentFilename={doc.original_filename}
+                clientId={doc.client_id}
+              />
+            )}
           </div>
         </div>
 

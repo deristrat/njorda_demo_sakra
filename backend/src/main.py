@@ -17,6 +17,7 @@ from src.routers import (
     chat,
     audit,
     reports,
+    messages,
 )
 
 
@@ -53,3 +54,4 @@ app.include_router(compliance.router)
 app.include_router(chat.router)
 app.include_router(audit.router)
 app.include_router(reports.router)
+app.include_router(messages.router)

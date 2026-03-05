@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import type { UserRole } from "@/types";
 
 interface ImpersonatingAs {
@@ -18,6 +18,8 @@ interface AuthState {
   isImpersonating: boolean;
   impersonatingAs: ImpersonatingAs | null;
   effectiveRole: UserRole | null;
+  validateCredentials: (username: string, password: string) => Promise<void>;
+  completeLogin: () => void;
   login: (username: string, password: string) => Promise<UserRole>;
   logout: () => Promise<void>;
   startImpersonation: (userId: number) => Promise<void>;
@@ -42,6 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonatingAs, setImpersonatingAs] = useState<ImpersonatingAs | null>(null);
+
+  // Pending login data — held between credential validation and 2FA completion
+  const pendingLoginRef = useRef<{
+    token: string; username: string; role: UserRole; name: string;
+    user_id: number; advisor_id: number | null;
+  } | null>(null);
 
   const isAuthenticated = !!token;
 
@@ -86,6 +94,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (token) refreshMe();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const validateCredentials = async (user: string, password: string): Promise<void> => {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: user, password }),
+    });
+    if (!res.ok) {
+      let message = "Inloggningen misslyckades";
+      try {
+        const body = await res.json();
+        if (body.detail) message = body.detail;
+      } catch { /* ignore */ }
+      throw new Error(message);
+    }
+    const data = await res.json();
+    pendingLoginRef.current = data;
+  };
+
+  const completeLogin = () => {
+    const data = pendingLoginRef.current;
+    if (!data) return;
+    pendingLoginRef.current = null;
+    setToken(data.token);
+    setUsername(data.username);
+    setRole(data.role);
+    setName(data.name);
+    setUserId(data.user_id);
+    setAdvisorId(data.advisor_id);
+    setIsImpersonating(false);
+    setImpersonatingAs(null);
+  };
 
   const login = async (user: string, password: string): Promise<UserRole> => {
     const res = await fetch("/api/auth/login", {
@@ -159,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{
       token, username, role, name, userId, advisorId,
       isAuthenticated, isImpersonating, impersonatingAs, effectiveRole,
+      validateCredentials, completeLogin,
       login, logout, startImpersonation, stopImpersonation, refreshMe,
     }}>
       {children}

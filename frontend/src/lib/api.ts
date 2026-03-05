@@ -123,7 +123,9 @@ export async function fetchDocument(id: number): Promise<DocumentDetail> {
 }
 
 export function getDocumentFileUrl(id: number): string {
-  return `${BASE}/${id}/file`;
+  const token = localStorage.getItem("auth_token");
+  const base = `${BASE}/${id}/file`;
+  return token ? `${base}?token=${encodeURIComponent(token)}` : base;
 }
 
 // --- Clients ---
@@ -375,6 +377,62 @@ export interface AppUser {
   name: string | null;
   role: string;
 }
+
+// --- Messages ---
+
+export async function fetchMessages(unreadOnly = false): Promise<import("@/types").MessageItem[]> {
+  const qs = unreadOnly ? "?unread_only=true" : "";
+  const res = await apiFetch(`/api/messages/${qs}`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta meddelanden"));
+  return res.json();
+}
+
+export async function fetchUnreadCount(): Promise<number> {
+  const res = await apiFetch("/api/messages/unread-count");
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta antal olästa"));
+  const data = await res.json();
+  return data.unread_count;
+}
+
+export async function createMessage(payload: {
+  recipient_user_id?: number;
+  document_id?: number;
+  client_id?: number;
+  advisor_id?: number;
+  subject: string;
+  body: string;
+}): Promise<import("@/types").MessageItem> {
+  const res = await apiFetch("/api/messages/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte skicka meddelande"));
+  return res.json();
+}
+
+export async function markMessageRead(id: number): Promise<void> {
+  const res = await apiFetch(`/api/messages/${id}/read`, { method: "PUT" });
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte markera som läst"));
+}
+
+export async function fetchMessageThread(id: number): Promise<import("@/types").MessageItem[]> {
+  const res = await apiFetch(`/api/messages/${id}/thread`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta tråd"));
+  return res.json();
+}
+
+export async function replyToMessage(id: number, body: string): Promise<import("@/types").MessageItem> {
+  const res = await apiFetch(`/api/messages/${id}/reply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ body }),
+  });
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte skicka svar"));
+  return res.json();
+}
+
+// --- Users & Impersonation ---
 
 export async function fetchUsers(): Promise<AppUser[]> {
   const res = await apiFetch("/api/auth/users");

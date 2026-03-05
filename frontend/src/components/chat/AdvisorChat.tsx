@@ -1,10 +1,11 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Bot, Wrench, Square, Trash2, Send, Loader2 } from "lucide-react";
+import { Bot, Wrench, Square, Trash2, Send, Loader2, Paperclip, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useChat, type ChatMessage, type ToolCall } from "@/lib/chat-context";
+import { uploadDocuments, processDocumentsSSE } from "@/lib/api";
 
 const DEFAULT_SUGGESTIONS = [
   "Vilka klienter har jag?",
@@ -12,7 +13,7 @@ const DEFAULT_SUGGESTIONS = [
   "Sammanfatta mitt dokumentläge",
 ];
 
-const DEFAULT_SUBTITLE = "Fråga om dina klienter, dokument eller compliance-status";
+const DEFAULT_SUBTITLE = "Skriv en fråga, klistra in mötesanteckningar eller ladda upp ett dokument – jag hjälper dig strukturera ett rådgivningsunderlag.";
 
 function ToolCallBadge({ tool }: { tool: ToolCall }) {
   return (
@@ -78,6 +79,44 @@ export function AdvisorChat({
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragCounterRef = useRef(0);
+  const [dragOver, setDragOver] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
+
+  const uploadAndChat = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0) return;
+      setFileUploading(true);
+      try {
+        const result = await uploadDocuments(files);
+        const docIds = result.documents.map((d) => d.id);
+        processDocumentsSSE(docIds, () => {}, () => {}, () => {});
+        const names = files.map((f) => f.name).join(", ");
+        await sendMessage(
+          files.length === 1
+            ? `Jag har laddat upp dokumentet "${names}". Kan du granska det?`
+            : `Jag har laddat upp ${files.length} dokument: ${names}. Kan du granska dem?`,
+        );
+      } catch (err) {
+        console.error("File upload error:", err);
+      } finally {
+        setFileUploading(false);
+      }
+    },
+    [sendMessage],
+  );
+
+  const handleFileDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current = 0;
+      setDragOver(false);
+      uploadAndChat(Array.from(e.dataTransfer.files));
+    },
+    [uploadAndChat],
+  );
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -109,7 +148,31 @@ export function AdvisorChat({
   };
 
   return (
-    <Card className={`flex flex-col ${expanded ? "flex-1 min-h-0 overflow-hidden" : "h-[480px]"}`}>
+    <Card
+      className={`relative flex flex-col ${expanded ? "flex-1 min-h-0 overflow-hidden" : "h-[480px]"}`}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        dragCounterRef.current++;
+        setDragOver(true);
+      }}
+      onDragOver={(e) => e.preventDefault()}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        dragCounterRef.current--;
+        if (dragCounterRef.current === 0) setDragOver(false);
+      }}
+      onDrop={handleFileDrop}
+    >
+      {dragOver && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-dashed border-primary bg-primary/5 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-2">
+            <Upload className="size-6 text-primary" />
+            <p className="text-sm font-medium text-primary">
+              Släpp för att ladda upp
+            </p>
+          </div>
+        </div>
+      )}
       <CardHeader className="flex-none border-b px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -172,15 +235,35 @@ export function AdvisorChat({
         {/* Input area */}
         <div className="flex-none border-t px-3 py-2">
           <div className="flex items-end gap-2">
+            <button
+              type="button"
+              className="mb-0.5 shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isStreaming || fileUploading}
+              title="Ladda upp dokument"
+            >
+              <Paperclip className="size-4" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files) uploadAndChat(Array.from(e.target.files));
+                e.target.value = "";
+              }}
+            />
             <textarea
               ref={textareaRef}
               value={input}
               onChange={handleTextareaInput}
               onKeyDown={handleKeyDown}
-              placeholder="Ställ en fråga..."
+              placeholder={fileUploading ? "Laddar upp dokument..." : "Ställ en fråga..."}
               rows={1}
               className="flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-              disabled={isStreaming}
+              disabled={isStreaming || fileUploading}
             />
             {isStreaming ? (
               <Button

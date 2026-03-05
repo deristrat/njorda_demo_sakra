@@ -1,11 +1,16 @@
-"""Auth: in-memory token store with role & impersonation support."""
+"""Auth: DB-backed token store with role & impersonation support."""
 
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from fastapi import HTTPException, Request
+from fastapi import Depends, HTTPException, Request
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from src.database import get_db
+from src.models.session_token import SessionToken
 
 
 @dataclass
@@ -47,48 +52,101 @@ class TokenInfo:
         return self.imp_name if self.is_impersonating else self.name
 
 
-# token → TokenInfo
-_tokens: dict[str, TokenInfo] = {}
+def _row_to_token_info(row: SessionToken) -> TokenInfo:
+    return TokenInfo(
+        user_id=row.user_id,
+        username=row.username,
+        name=row.name,
+        role=row.role,
+        advisor_id=row.advisor_id,
+        imp_user_id=row.imp_user_id,
+        imp_username=row.imp_username,
+        imp_name=row.imp_name,
+        imp_role=row.imp_role,
+        imp_advisor_id=row.imp_advisor_id,
+    )
 
 
-def create_token(info: TokenInfo) -> str:
+def create_token(db: Session, info: TokenInfo) -> str:
     token = uuid.uuid4().hex
-    _tokens[token] = info
+    row = SessionToken(
+        token=token,
+        user_id=info.user_id,
+        username=info.username,
+        name=info.name,
+        role=info.role,
+        advisor_id=info.advisor_id,
+    )
+    db.add(row)
+    db.flush()
     return token
 
 
-def get_token_info(token: str) -> TokenInfo | None:
-    return _tokens.get(token)
+def get_token_info(db: Session, token: str) -> TokenInfo | None:
+    row = db.execute(
+        select(SessionToken).where(SessionToken.token == token)
+    ).scalar_one_or_none()
+    if not row:
+        return None
+    return _row_to_token_info(row)
 
 
-def revoke_token(token: str) -> None:
-    _tokens.pop(token, None)
+def get_token_row(db: Session, token: str) -> SessionToken | None:
+    return db.execute(
+        select(SessionToken).where(SessionToken.token == token)
+    ).scalar_one_or_none()
+
+
+def revoke_token(db: Session, token: str) -> None:
+    row = db.execute(
+        select(SessionToken).where(SessionToken.token == token)
+    ).scalar_one_or_none()
+    if row:
+        db.delete(row)
+        db.flush()
 
 
 def _extract_token(request: Request) -> str | None:
+    # 1. Authorization header (API calls)
     auth = request.headers.get("Authorization", "")
     if auth.startswith("Bearer "):
         return auth[7:]
+    # 2. Query parameter (browser navigation: iframes, window.open, etc.)
+    token = request.query_params.get("token")
+    if token:
+        return token
     return None
 
 
-def get_current_user(request: Request) -> TokenInfo:
+def get_current_user(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> TokenInfo:
     """FastAPI dependency — raises 401 if no valid token. Returns real user info."""
     token = _extract_token(request)
-    if not token or token not in _tokens:
+    if not token:
         raise HTTPException(401, "Inte autentiserad")
-    return _tokens[token]
+    info = get_token_info(db, token)
+    if not info:
+        raise HTTPException(401, "Inte autentiserad")
+    return info
 
 
-def get_effective_user(request: Request) -> TokenInfo:
+def get_effective_user(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> TokenInfo:
     """FastAPI dependency — returns effective (impersonated) user context.
     Same object as get_current_user, but callers should use .effective_* properties."""
-    return get_current_user(request)
+    return get_current_user(request, db)
 
 
-def get_current_user_optional(request: Request) -> TokenInfo | None:
+def get_current_user_optional(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> TokenInfo | None:
     """FastAPI dependency — returns None instead of 401."""
     token = _extract_token(request)
-    if not token or token not in _tokens:
+    if not token:
         return None
-    return _tokens[token]
+    return get_token_info(db, token)

@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DocumentsTable } from "@/components/documents/DocumentsTable";
 import { fetchAdvisor, fetchAdvisorDocuments } from "@/lib/api";
+import { SendCommentDialog } from "@/components/notifications/SendCommentDialog";
+import { useAuth } from "@/lib/auth";
 import type { AdvisorDetail, DocumentSummary } from "@/types";
 import { toast } from "sonner";
 
 export function AdvisorDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { effectiveRole } = useAuth();
   const [advisor, setAdvisor] = useState<AdvisorDetail | null>(null);
   const [docs, setDocs] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +78,15 @@ export function AdvisorDetailPage() {
             <ArrowLeft className="mr-1 size-4" />
             Tillbaka
           </Button>
+          {effectiveRole !== "advisor" && (
+            <div className="ml-auto">
+              <SendCommentDialog
+                advisorId={advisorId}
+                advisorName={advisor.advisor_name}
+                defaultSubject={`Angående rådgivare: ${advisor.advisor_name}`}
+              />
+            </div>
+          )}
         </div>
 
         <Card>

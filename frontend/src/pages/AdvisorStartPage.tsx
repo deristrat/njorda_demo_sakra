@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
-import { FileText, Users, CheckCircle2, Inbox } from "lucide-react";
+import { FileText, Users, CheckCircle2, Inbox, Upload, Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdvisorChat } from "@/components/chat/AdvisorChat";
-import { fetchDocuments, fetchClients } from "@/lib/api";
+import { fetchDocuments, fetchClients, uploadDocuments, processDocumentsSSE } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useChat } from "@/lib/chat-context";
 import type { DocumentSummary, Client } from "@/types";
@@ -20,6 +20,52 @@ export function AdvisorStartPage() {
   const [docs, setDocs] = useState<DocumentSummary[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<
+    "idle" | "uploading" | "processing" | "done" | "error"
+  >("idle");
+  const [uploadedFileNames, setUploadedFileNames] = useState<string[]>([]);
+  const [uploadedDocIds, setUploadedDocIds] = useState<number[]>([]);
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
+  }, []);
+
+  const handleFilesUpload = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0) return;
+      setUploadedFileNames(files.map((f) => f.name));
+      setUploadStatus("uploading");
+      try {
+        const result = await uploadDocuments(files);
+        const docIds = result.documents.map((d) => d.id);
+        setUploadedDocIds(docIds);
+        setUploadStatus("processing");
+        processDocumentsSSE(
+          docIds,
+          () => {},
+          () => setUploadStatus("done"),
+          () => setUploadStatus("error"),
+        );
+      } catch {
+        setUploadStatus("error");
+      }
+    },
+    [],
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+      handleFilesUpload(Array.from(e.dataTransfer.files));
+    },
+    [handleFilesUpload],
+  );
 
   useEffect(() => {
     document.title = "Start — Säkra";
@@ -120,16 +166,19 @@ export function AdvisorStartPage() {
           <h1 className="font-brand text-2xl tracking-tight">
             Välkommen tillbaka{displayName ? `, ${displayName.split(" ")[0]}` : ""}
           </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Redo för nästa rådgivningsmöte?
+          </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map((card) => (
             <Card
               key={card.label}
-              className="cursor-pointer transition-colors hover:bg-muted/50"
+              className="cursor-pointer py-0 gap-0 transition-colors hover:bg-muted/50"
               onClick={() => navigate(card.path)}
             >
-              <CardContent className="flex items-center gap-4 p-5">
+              <CardContent className="flex items-center gap-4 px-5 py-3">
                 <div
                   className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${card.color}`}
                 >
@@ -148,6 +197,92 @@ export function AdvisorStartPage() {
             </Card>
           ))}
         </div>
+
+        {/* Document drop zone */}
+        {uploadStatus === "idle" ? (
+          <label
+            htmlFor="start-file-upload"
+            className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed px-5 py-4 transition-colors ${
+              dragActive
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-primary/50 hover:bg-secondary/30"
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <Upload className="size-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Ladda upp dokument</p>
+              <p className="text-xs text-muted-foreground">
+                Dra och släpp, eller klicka för att bläddra
+              </p>
+            </div>
+            <input
+              id="start-file-upload"
+              type="file"
+              multiple
+              accept=".pdf"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files)
+                  handleFilesUpload(Array.from(e.target.files));
+              }}
+            />
+          </label>
+        ) : uploadStatus === "uploading" || uploadStatus === "processing" ? (
+          <div className="flex items-center gap-3 rounded-xl border px-5 py-4">
+            <Loader2 className="size-5 animate-spin text-primary" />
+            <div>
+              <p className="text-sm font-medium">
+                {uploadStatus === "uploading"
+                  ? "Laddar upp..."
+                  : "Analyserar dokument..."}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {uploadedFileNames.join(", ")}
+              </p>
+            </div>
+          </div>
+        ) : uploadStatus === "done" ? (
+          <div
+            className="flex cursor-pointer items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 transition-colors hover:bg-emerald-100"
+            onClick={() => {
+              if (uploadedDocIds.length === 1)
+                navigate(`/documents/${uploadedDocIds[0]}`);
+              else navigate("/archive");
+            }}
+          >
+            <CheckCircle2 className="size-5 text-emerald-600" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-emerald-900">
+                {uploadedFileNames.length === 1
+                  ? "Dokument uppladdat och analyserat"
+                  : `${uploadedFileNames.length} dokument uppladdade`}
+              </p>
+            </div>
+            <span className="text-sm font-medium text-emerald-700">
+              Visa →
+            </span>
+          </div>
+        ) : uploadStatus === "error" ? (
+          <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-4">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-900">
+                Uppladdning misslyckades
+              </p>
+            </div>
+            <button
+              className="text-sm font-medium text-red-700 hover:text-red-900"
+              onClick={() => setUploadStatus("idle")}
+            >
+              Försök igen
+            </button>
+          </div>
+        ) : null}
 
         <div>
           <h2 className="mb-3 font-brand text-sm font-medium text-muted-foreground">

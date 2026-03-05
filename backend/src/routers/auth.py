@@ -12,7 +12,7 @@ from src.auth import (
     TokenInfo,
     create_token,
     get_current_user,
-    get_token_info,
+    get_token_row,
     revoke_token,
     _extract_token,
 )
@@ -96,7 +96,7 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse:
         role=user.role,
         advisor_id=advisor_id,
     )
-    token = create_token(info)
+    token = create_token(db, info)
 
     record_audit_event(
         db,
@@ -119,10 +119,11 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse:
 
 
 @router.post("/logout")
-def logout(request: Request) -> dict:
+def logout(request: Request, db: Session = Depends(get_db)) -> dict:
     token = _extract_token(request)
     if token:
-        revoke_token(token)
+        revoke_token(db, token)
+        db.commit()
     return {"ok": True}
 
 
@@ -184,12 +185,17 @@ def impersonate(
 
     target_advisor_id = _resolve_advisor_id(target.name, db)
 
-    # Update the token info in-place
-    user.imp_user_id = target.id
-    user.imp_username = target.username
-    user.imp_name = target.name or target.username
-    user.imp_role = target.role
-    user.imp_advisor_id = target_advisor_id
+    # Update the DB row with impersonation state
+    token_str = _extract_token(request)
+    if token_str:
+        row = get_token_row(db, token_str)
+        if row:
+            row.imp_user_id = target.id
+            row.imp_username = target.username
+            row.imp_name = target.name or target.username
+            row.imp_role = target.role
+            row.imp_advisor_id = target_advisor_id
+            db.commit()
 
     return MeResponse(
         username=user.username,
@@ -208,13 +214,20 @@ def impersonate(
 
 @router.post("/stop-impersonation")
 def stop_impersonation(
+    request: Request,
     user: TokenInfo = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> MeResponse:
-    user.imp_user_id = None
-    user.imp_username = None
-    user.imp_name = None
-    user.imp_role = None
-    user.imp_advisor_id = None
+    token_str = _extract_token(request)
+    if token_str:
+        row = get_token_row(db, token_str)
+        if row:
+            row.imp_user_id = None
+            row.imp_username = None
+            row.imp_name = None
+            row.imp_role = None
+            row.imp_advisor_id = None
+            db.commit()
 
     return MeResponse(
         username=user.username,

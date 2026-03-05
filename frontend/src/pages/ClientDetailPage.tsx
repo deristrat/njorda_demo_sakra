@@ -12,12 +12,15 @@ import {
   uploadDocuments,
   processDocumentsSSE,
 } from "@/lib/api";
+import { SendCommentDialog } from "@/components/notifications/SendCommentDialog";
+import { useAuth } from "@/lib/auth";
 import type { ClientDetail, DocumentSummary, ProcessEvent } from "@/types";
 import { toast } from "sonner";
 
 export function ClientDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { effectiveRole } = useAuth();
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [docs, setDocs] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,6 +111,16 @@ export function ClientDetailPage() {
             <ArrowLeft className="mr-1 size-4" />
             Tillbaka
           </Button>
+          {effectiveRole !== "advisor" && docs.some((d) => d.advisor_id) && (
+            <div className="ml-auto">
+              <SendCommentDialog
+                clientId={clientId}
+                advisorId={docs.find((d) => d.advisor_id)?.advisor_id}
+                advisorName={docs.find((d) => d.advisor_name)?.advisor_name}
+                defaultSubject={`Angående klient: ${client.person_name || client.person_number}`}
+              />
+            </div>
+          )}
         </div>
 
         {/* Client info card */}

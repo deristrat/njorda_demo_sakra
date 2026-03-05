@@ -142,7 +142,7 @@ export function ComplianceStartPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {statCards.map((card) => (
             <Card key={card.label}>
-              <CardContent className="flex items-center gap-4 p-5">
+              <CardContent className="flex items-center gap-4 px-5 py-3">
                 <div
                   className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${card.color}`}
                 >

@@ -309,6 +309,28 @@ export interface ComplianceReportRunDetail {
   completed_at: string | null;
 }
 
+// Message types
+
+export interface MessageItem {
+  id: number;
+  sender_user_id: number;
+  sender_name: string | null;
+  recipient_user_id: number;
+  recipient_name: string | null;
+  document_id: number | null;
+  client_id: number | null;
+  client_name: string | null;
+  document_filename: string | null;
+  subject: string;
+  body: string;
+  compliance_score: number | null;
+  compliance_status: string | null;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+  reply_count: number;
+}
+
 export interface ComplianceRuleConfig {
   rule_id: string;
   name: string;
