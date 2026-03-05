@@ -137,7 +137,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const [examplesOpen, setExamplesOpen] = useState(false);
-  const [subMenuOpen, setSubMenuOpen] = useState<Record<string, boolean>>({});
+  const [subMenuOpen, setSubMenuOpen] = useState<Record<string, boolean>>({ Rapporter: true });
   const {
     username, name: authName, role, effectiveRole,
     isImpersonating, impersonatingAs,

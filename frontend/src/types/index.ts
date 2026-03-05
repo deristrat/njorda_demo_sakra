@@ -220,6 +220,95 @@ export interface ComplianceReport {
   summary: ComplianceSummaryData;
 }
 
+// Compliance report types
+
+export interface ComplianceReportRunSummary {
+  id: number;
+  title: string;
+  status: string;
+  generated_by: string;
+  summary_stats: {
+    total_documents: number;
+    average_score: number;
+    status_distribution: { green: number; yellow: number; red: number };
+    compliance_rate: number;
+  } | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface CriticalItem {
+  document_id: number;
+  filename: string;
+  client_name: string | null;
+  advisor_name: string | null;
+  document_type: string | null;
+  score: number;
+  status: string;
+  failed_rules: Array<{
+    rule_id: string;
+    rule_name: string;
+    severity: string;
+    findings: Array<{ message: string; context?: Record<string, unknown> }>;
+  }>;
+}
+
+export interface AdvisorBreakdown {
+  advisor_id: number | null;
+  advisor_name: string;
+  document_count: number;
+  average_score: number;
+  green: number;
+  yellow: number;
+  red: number;
+  documents: Array<{
+    document_id: number;
+    filename: string;
+    client_name: string | null;
+    score: number;
+    status: string;
+    failed_rules: Array<{
+      rule_id: string;
+      rule_name: string;
+      severity: string;
+      findings: Array<{ message: string }>;
+    }>;
+  }>;
+}
+
+export interface ComplianceReportRunDetail {
+  id: number;
+  title: string;
+  status: string;
+  generated_by: string;
+  report_data: {
+    generated_at: string;
+    generated_by: string;
+    total_documents: number;
+    reviewed_documents: number;
+    average_score: number;
+    status_distribution: { green: number; yellow: number; red: number };
+    compliance_rate: number;
+    critical_items: CriticalItem[];
+    most_failed_rules: Array<{
+      rule_id: string;
+      rule_name: string;
+      fail_count: number;
+      category: string;
+    }>;
+    advisor_breakdown: AdvisorBreakdown[];
+    document_type_coverage: Record<string, { count: number; avg_score: number }>;
+  } | null;
+  summary_stats: {
+    total_documents: number;
+    average_score: number;
+    status_distribution: { green: number; yellow: number; red: number };
+    compliance_rate: number;
+  } | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
 export interface ComplianceRuleConfig {
   rule_id: string;
   name: string;

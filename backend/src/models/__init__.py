@@ -5,6 +5,7 @@ from src.models.advisor import Advisor
 from src.models.app_settings import AppSetting
 from src.models.compliance import ComplianceRule, ComplianceFinding, ComplianceRuleAudit
 from src.models.audit_event import AuditEvent
+from src.models.compliance_report import ComplianceReportRun
 
 __all__ = [
     "User",
@@ -17,4 +18,5 @@ __all__ = [
     "ComplianceFinding",
     "ComplianceRuleAudit",
     "AuditEvent",
+    "ComplianceReportRun",
 ]

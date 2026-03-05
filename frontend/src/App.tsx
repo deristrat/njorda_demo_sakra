@@ -14,6 +14,7 @@ import { InboxPage } from "@/pages/InboxPage";
 import { AuditPage } from "@/pages/AuditPage";
 import { AuditEventDetailPage } from "@/pages/AuditEventDetailPage";
 import { ComplianceReportPage } from "@/pages/ComplianceReportPage";
+import { ComplianceReportDetailPage } from "@/pages/ComplianceReportDetailPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ClientsPage } from "@/pages/ClientsPage";
 import { ClientsListPage } from "@/pages/ClientsListPage";
@@ -83,6 +84,7 @@ export default function App() {
                   <Route path="/audit" element={<AuditPage />} />
                   <Route path="/audit/:id" element={<AuditEventDetailPage />} />
                   <Route path="/reports/compliance" element={<ComplianceReportPage />} />
+                  <Route path="/reports/compliance/:id" element={<ComplianceReportDetailPage />} />
                   <Route path="/settings" element={<FontSettingsPage />} />
                   <Route path="/settings/compliance" element={<ComplianceSettingsPage />} />
                   <Route path="/settings/compliance/new" element={<CreateComplianceRulePage />} />

@@ -8,6 +8,8 @@ import type {
   ProcessEvent,
   ComplianceReport,
   ComplianceRuleConfig,
+  ComplianceReportRunSummary,
+  ComplianceReportRunDetail,
 } from "@/types";
 import { getAuthHeaders } from "@/lib/auth";
 
@@ -261,6 +263,26 @@ export async function updateComplianceThresholds(
     body: JSON.stringify(thresholds),
   });
   if (!res.ok) throw new Error(await parseError(res, "Kunde inte uppdatera tröskelvärden"));
+  return res.json();
+}
+
+// --- Compliance Reports ---
+
+export async function generateComplianceReport(): Promise<ComplianceReportRunDetail> {
+  const res = await apiFetch("/api/reports/compliance", { method: "POST" });
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte generera rapport"));
+  return res.json();
+}
+
+export async function fetchComplianceReports(): Promise<ComplianceReportRunSummary[]> {
+  const res = await apiFetch("/api/reports/compliance");
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta rapporter"));
+  return res.json();
+}
+
+export async function fetchComplianceReport(id: number): Promise<ComplianceReportRunDetail> {
+  const res = await apiFetch(`/api/reports/compliance/${id}`);
+  if (!res.ok) throw new Error(await parseError(res, "Kunde inte hämta rapport"));
   return res.json();
 }
 
