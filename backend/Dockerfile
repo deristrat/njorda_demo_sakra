@@ -35,4 +35,4 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
 
 # Run migrations and start server
-CMD ["sh", "-c", "alembic upgrade head && python -m src.seed && uvicorn src.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "alembic upgrade head && python -m src.seed && python -m src.seed_test_documents && uvicorn src.main:app --host 0.0.0.0 --port 8000"]
