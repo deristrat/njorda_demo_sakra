@@ -11,13 +11,12 @@ from __future__ import annotations
 
 import copy
 import uuid
-from datetime import date, datetime
+from pathlib import Path
 
 from sqlalchemy import select
 
 from src.compliance.seed import seed_default_rules
 from src.database import SessionLocal
-from src.extraction.models import ExtractionResult
 from src.models import Client, Document, DocumentExtraction
 from src.models.advisor import Advisor
 from src.routers.compliance import run_compliance_for_document
@@ -92,7 +91,207 @@ PERFECT_EXTRACTION = {
 # ---------------------------------------------------------------------------
 
 TEST_DOCUMENTS = [
-    # 1. GREEN — missing only document date (META_003, -3 → score 97)
+    # ── Original PDFs (1-4) ─────────────────────────────────────────────
+    # 1. GREEN — complete, well-documented advice (score ~100)
+    {
+        "filename": "1_perfect_advice.pdf",
+        "client_name": "Erik Johansson",
+        "client_pnr": "19850315-4521",
+        "advisor_name": "Anna Lindgren",
+        "advisor_firm": "Nordisk Finansrådgivning AB",
+        "document_date": "2026-01-15",
+        "patches": {
+            "document_date": "2026-01-15",
+            "suitability": {
+                "risk_profile": "medium",
+                "investment_horizon": "20 år",
+                "experience_level": "moderate",
+                "financial_situation": (
+                    "Bruttoinkomst 52 000 SEK/månad, nettoinkomst 38 500 SEK/månad. "
+                    "Fasta utgifter 25 000 SEK/månad. Gift, 2 barn. "
+                    "Totala tillgångar 750 000 SEK, befintligt sparande 350 000 SEK, "
+                    "bostadslåneskuld 1 800 000 SEK, billån 45 000 SEK. "
+                    "Fast anställning som projektledare på Volvo AB sedan 2018. "
+                    "Partner arbetar deltid med inkomst ca 28 000 SEK/månad."
+                ),
+                "investment_objective": (
+                    "Långsiktigt pensionssparande som komplement till tjänstepensionen. "
+                    "Sekundärt mål: buffert för oförutsedda utgifter"
+                ),
+                "loss_tolerance": "Kan hantera tillfälliga nedgångar på upp till 25%",
+            },
+            "recommendations": [
+                {
+                    "product_name": "Skandia Time Global",
+                    "isin": None,
+                    "amount": None,
+                    "percentage": 40.0,
+                    "motivation": (
+                        "Global aktiefond med riskklassificering 4/7 som ger bred "
+                        "geografisk exponering. Matchar kundens medelhöga riskprofil "
+                        "och långsiktiga tillväxtmål. Artikel 8 SFDR."
+                    ),
+                },
+                {
+                    "product_name": "Skandia Småbolag Sverige",
+                    "isin": None,
+                    "amount": None,
+                    "percentage": 20.0,
+                    "motivation": (
+                        "Svensk småbolagsfond (risk 5/7) för extra tillväxtpotential. "
+                        "Artikel 8 SFDR, möter kundens hållbarhetspreferenser."
+                    ),
+                },
+                {
+                    "product_name": "Skandia Obligation",
+                    "isin": None,
+                    "amount": None,
+                    "percentage": 25.0,
+                    "motivation": (
+                        "Obligationsfond (risk 2/7) som ger stabilitet och balanserar "
+                        "aktierisken i portföljen. Artikel 8 SFDR."
+                    ),
+                },
+                {
+                    "product_name": "Skandia Räntefond",
+                    "isin": None,
+                    "amount": None,
+                    "percentage": 15.0,
+                    "motivation": (
+                        "Korträntefond (risk 1/7) för ytterligare stabilitet "
+                        "och likviditet i portföljen."
+                    ),
+                },
+            ],
+        },
+        "expected_rule": "NONE (perfect)",
+    },
+    # 2. YELLOW — missing fund-level recs, no loss tolerance stated
+    {
+        "filename": "2_missing_fields.pdf",
+        "client_name": "Maria Larsson",
+        "client_pnr": "19780622-8834",
+        "advisor_name": "Johan Berg",
+        "advisor_firm": "Södermalm Förmedling AB",
+        "document_date": "2026-01-20",
+        "patches": {
+            "document_date": "2026-01-20",
+            "suitability": {
+                "risk_profile": "medium",
+                "investment_horizon": "15 år",
+                "experience_level": "limited",
+                "financial_situation": (
+                    "Bruttoinkomst 42 000 SEK/månad som sjuksköterska. "
+                    "Tillgångar ca 400 000 SEK i fonder. "
+                    "Bostadslån 1 500 000 SEK. Stabil inkomst."
+                ),
+                "investment_objective": "Pensionssparande",
+                "loss_tolerance": None,
+            },
+            "recommendations": [
+                {
+                    "product_name": "Folksam Fondförsäkring",
+                    "isin": None,
+                    "amount": None,
+                    "percentage": 100.0,
+                    "motivation": None,
+                },
+            ],
+        },
+        "expected_rule": "KYC_005 + REC_002",
+    },
+    # 3. GREEN — pension transfer, well-documented
+    {
+        "filename": "3_pension_transfer.pdf",
+        "client_name": "Anders Nilsson",
+        "client_pnr": "19720814-3345",
+        "advisor_name": "Karin Ek",
+        "advisor_firm": "Pensionsrådgivarna i Stockholm AB",
+        "document_date": "2026-02-01",
+        "patches": {
+            "document_type": "pension_transfer",
+            "document_date": "2026-02-01",
+            "suitability": {
+                "risk_profile": "medium_high",
+                "investment_horizon": "18 år",
+                "experience_level": "extensive",
+                "financial_situation": (
+                    "Bruttoinkomst 65 000 SEK/månad, nettoinkomst 47 000 SEK/månad. "
+                    "Fasta utgifter 32 000 SEK/månad, sparutrymme 10 000 SEK/månad. "
+                    "Totala tillgångar 1 200 000 SEK. Bostadslån 2 100 000 SEK. "
+                    "Anställd på Ericsson AB."
+                ),
+                "investment_objective": "Optimera befintlig tjänstepension för maximal tillväxt",
+                "loss_tolerance": "Kan acceptera 30% nedgång kortsiktigt",
+            },
+            "pension_provider_from": "Alecta",
+            "pension_provider_to": "Avanza Pension",
+            "transfer_amount": 850000,
+            "recommendations": [
+                {
+                    "product_name": "Avanza Global",
+                    "isin": None,
+                    "amount": None,
+                    "percentage": 50.0,
+                    "motivation": (
+                        "Global aktiefond (risk 5/7) för bred tillväxtexponering. "
+                        "Låg avgift 0,30% matchar kundens fokus på kostnadseffektivitet"
+                    ),
+                },
+                {
+                    "product_name": "Avanza Sverige",
+                    "isin": None,
+                    "amount": None,
+                    "percentage": 25.0,
+                    "motivation": (
+                        "Svensk aktiefond (risk 5/7) för nordisk exponering. "
+                        "Avgift 0,40%"
+                    ),
+                },
+                {
+                    "product_name": "Avanza Ränta",
+                    "isin": None,
+                    "amount": None,
+                    "percentage": 25.0,
+                    "motivation": (
+                        "Räntefond (risk 2/7) för stabilitet i portföljen. "
+                        "Låg avgift 0,15%"
+                    ),
+                },
+            ],
+        },
+        "expected_rule": "NONE (complete pension transfer)",
+    },
+    # 4. RED — minimal bad doc, missing almost everything
+    {
+        "filename": "4_minimal_bad.pdf",
+        "client_name": "Per Svensson",
+        "client_pnr": None,
+        "advisor_name": None,
+        "advisor_firm": None,
+        "document_date": "2026-01-25",
+        "patches": {
+            "document_date": "2026-01-25",
+            "advisor": {
+                "advisor_name": None,
+                "firm_name": None,
+                "license_number": None,
+            },
+            "suitability": None,
+            "recommendations": [
+                {
+                    "product_name": "Avanza Auto 6",
+                    "isin": None,
+                    "amount": None,
+                    "percentage": 100.0,
+                    "motivation": "Bra produkt med låga avgifter",
+                },
+            ],
+        },
+        "expected_rule": "KYC_000 + META_001 + META_002 (RED)",
+    },
+    # ── Synthetic test documents (5-11) ─────────────────────────────────
+    # 5. GREEN — missing only document date (META_003, -3 → score 97)
     {
         "filename": "5_missing_date.pdf",
         "client_name": "Lena Eriksson",
@@ -529,6 +728,9 @@ def _get_advisor(db, advisor_name: str) -> Advisor | None:
     ).scalar_one_or_none()
 
 
+TEST_PDF_DIR = Path(__file__).resolve().parent.parent.parent / "test_pdfs"
+
+
 def seed_test_documents() -> None:
     db = SessionLocal()
     try:
@@ -556,24 +758,34 @@ def seed_test_documents() -> None:
             # Build extraction data
             extraction_data = _build_extraction(doc_def)
 
-            # Get or create client
-            client = _get_or_create_client(
-                db, doc_def["client_name"], doc_def["client_pnr"]
-            )
+            # Get or create client (skip if no personnummer)
+            client = None
+            if doc_def.get("client_pnr"):
+                client = _get_or_create_client(
+                    db, doc_def["client_name"], doc_def["client_pnr"]
+                )
 
             # Find advisor
-            advisor = _get_advisor(db, doc_def["advisor_name"])
+            advisor = None
+            if doc_def.get("advisor_name"):
+                advisor = _get_advisor(db, doc_def["advisor_name"])
+
+            # Load PDF file data from test_pdfs/ if available
+            pdf_path = TEST_PDF_DIR / doc_def["filename"]
+            file_data = pdf_path.read_bytes() if pdf_path.exists() else None
+            file_size = len(file_data) if file_data else 50000
 
             # Create document
             doc = Document(
                 original_filename=doc_def["filename"],
                 stored_filename=extraction_data["source_filename"],
                 file_hash=uuid.uuid4().hex,
-                file_size=50000,
+                file_size=file_size,
+                file_data=file_data,
                 mime_type="application/pdf",
                 status="completed",
                 user_id=admin_user.id,
-                client_id=client.id,
+                client_id=client.id if client else None,
                 advisor_id=advisor.id if advisor else None,
             )
             db.add(doc)

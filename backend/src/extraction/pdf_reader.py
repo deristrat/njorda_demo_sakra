@@ -20,33 +20,35 @@ class PDFContent:
     base64_bytes: str = ""  # base64-encoded raw PDF bytes
 
 
-def read_pdf(path: Path) -> PDFContent:
+def read_pdf(source: Path | bytes, *, filename: str = "document.pdf") -> PDFContent:
     """Read a PDF and return its text content and raw bytes.
 
     Args:
-        path: Path to the PDF file.
+        source: Path to a PDF file, or raw PDF bytes.
+        filename: Display name (used when source is bytes).
 
     Returns:
         PDFContent with per-page text, joined text, and base64 bytes.
-
-    Raises:
-        FileNotFoundError: If the PDF doesn't exist.
-        RuntimeError: If PyMuPDF can't open the file.
     """
-    if not path.exists():
-        raise FileNotFoundError(f"PDF not found: {path}")
+    if isinstance(source, (Path, str)):
+        path = Path(source)
+        if not path.exists():
+            raise FileNotFoundError(f"PDF not found: {path}")
+        raw_bytes = path.read_bytes()
+        filename = path.name
+    else:
+        raw_bytes = source
 
-    raw_bytes = path.read_bytes()
     b64 = base64.standard_b64encode(raw_bytes).decode("ascii")
 
-    doc = fitz.open(path)
+    doc = fitz.open(stream=raw_bytes, filetype="pdf")
     pages_text = []
     for page in doc:
         pages_text.append(page.get_text())
     doc.close()
 
     return PDFContent(
-        filename=path.name,
+        filename=filename,
         page_count=len(pages_text),
         pages_text=pages_text,
         full_text="\n\n".join(pages_text),

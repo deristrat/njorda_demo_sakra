@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, func, select
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, LargeBinary, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,6 +15,7 @@ class Document(Base):
     stored_filename: Mapped[str] = mapped_column(String(255), unique=True)
     file_hash: Mapped[str] = mapped_column(String(64), index=True)
     file_size: Mapped[int] = mapped_column(Integer)
+    file_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     mime_type: Mapped[str] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(String(20), default="uploaded")
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)

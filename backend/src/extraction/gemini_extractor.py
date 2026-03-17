@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 
 from google import genai
 from google.genai import types
@@ -41,14 +40,13 @@ class GeminiExtractor(BaseExtractor):
     def name(self) -> str:
         return self._display_name
 
-    async def extract(self, pdf_path: Path) -> ExtractionResult:
-        pdf = read_pdf(pdf_path)
-        pdf_bytes = pdf_path.read_bytes()
+    async def extract(self, pdf_data: bytes, filename: str = "document.pdf") -> ExtractionResult:
+        pdf = read_pdf(pdf_data, filename=filename)
 
         response = await self._client.aio.models.generate_content(
             model=self._model,
             contents=[
-                types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
+                types.Part.from_bytes(data=pdf_data, mime_type="application/pdf"),
                 GEMINI_USER_PROMPT,
             ],
             config=types.GenerateContentConfig(

@@ -8,12 +8,11 @@ import json
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, joinedload
 
 from src.auth import TokenInfo, get_effective_user
-from src.config import settings
 from src.database import get_db
 from src.extraction.base import ExtractionError
 from src.extraction.cli import MODELS, make_extractor
@@ -40,8 +39,6 @@ async def upload_documents(
     db: Session = Depends(get_db),
     user: TokenInfo = Depends(get_effective_user),
 ):
-    settings.upload_dir.mkdir(parents=True, exist_ok=True)
-
     results = []
     for file in files:
         content = await file.read()
@@ -60,13 +57,13 @@ async def upload_documents(
             )
 
         stored_filename = f"{uuid.uuid4().hex}.pdf"
-        (settings.upload_dir / stored_filename).write_bytes(content)
 
         doc = Document(
             original_filename=file.filename or "unknown.pdf",
             stored_filename=stored_filename,
             file_hash=file_hash,
             file_size=len(content),
+            file_data=content,
             mime_type=file.content_type or "application/pdf",
             status="uploaded",
         )
@@ -148,8 +145,9 @@ async def process_documents(
             )
 
             try:
-                pdf_path = settings.upload_dir / doc.stored_filename
-                result = await extractor.extract(pdf_path)
+                if not doc.file_data:
+                    raise ExtractionError("Dokumentet saknar fildata i databasen")
+                result = await extractor.extract(doc.file_data, doc.original_filename)
                 result_data = result.model_dump(mode="json")
 
                 extraction.status = "completed"
@@ -246,10 +244,6 @@ def delete_documents(
     filenames = [doc.original_filename for doc in docs]
 
     for doc in docs:
-        # Delete the file from disk
-        file_path = settings.upload_dir / doc.stored_filename
-        if file_path.exists():
-            file_path.unlink()
         # Delete compliance findings
         from src.models.compliance import ComplianceFinding
 
@@ -393,15 +387,15 @@ def get_document_file(
 
     _check_doc_ownership(doc, user)
 
-    file_path = settings.upload_dir / doc.stored_filename
-    if not file_path.exists():
-        raise HTTPException(404, "File not found on disk")
+    if not doc.file_data:
+        raise HTTPException(404, "Fildata saknas i databasen")
 
-    return FileResponse(
-        file_path,
+    return Response(
+        content=doc.file_data,
         media_type=doc.mime_type,
-        filename=doc.original_filename,
-        content_disposition_type="inline",
+        headers={
+            "Content-Disposition": f'inline; filename="{doc.original_filename}"',
+        },
     )
 
 

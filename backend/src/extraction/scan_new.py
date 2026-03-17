@@ -85,7 +85,8 @@ async def extract_one(
         print(f"  {DIM}[{index}/{total}] Extracting {name}...{RESET}", flush=True)
         t0 = time.monotonic()
         try:
-            result = await extractor.extract(pdf_path)
+            pdf_data = pdf_path.read_bytes()
+            result = await extractor.extract(pdf_data, name)
             elapsed = time.monotonic() - t0
             print(
                 f"  {GREEN}[{index}/{total}] ✓ {name} ({elapsed:.1f}s){RESET}",

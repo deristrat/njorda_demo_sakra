@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 
 import anthropic
 from anthropic.types import ToolParam
@@ -37,8 +36,8 @@ class AnthropicExtractor(BaseExtractor):
     def name(self) -> str:
         return self._display_name
 
-    async def extract(self, pdf_path: Path) -> ExtractionResult:
-        pdf = read_pdf(pdf_path)
+    async def extract(self, pdf_data: bytes, filename: str = "document.pdf") -> ExtractionResult:
+        pdf = read_pdf(pdf_data, filename=filename)
 
         message = await self._client.messages.create(
             model=self._model,

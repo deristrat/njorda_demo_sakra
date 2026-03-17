@@ -37,6 +37,7 @@ def db_reset(c: Context):
     with c.cd(BACKEND_DIR):
         c.run("uv run alembic upgrade head", pty=True)
         c.run("uv run python -m src.seed", pty=True)
+        c.run("uv run python -m src.seed_test_documents", pty=True)
 
 
 @task

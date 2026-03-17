@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from pathlib import Path
 
 from .models import (
     AdvisorInfo,
@@ -25,11 +24,12 @@ class BaseExtractor(ABC):
         """Identifier for this extractor (e.g. 'anthropic', 'gemini')."""
 
     @abstractmethod
-    async def extract(self, pdf_path: Path) -> ExtractionResult:
-        """Extract structured data from a PDF file.
+    async def extract(self, pdf_data: bytes, filename: str = "document.pdf") -> ExtractionResult:
+        """Extract structured data from PDF bytes.
 
         Args:
-            pdf_path: Path to the PDF file.
+            pdf_data: Raw PDF file bytes.
+            filename: Original filename for reference.
 
         Returns:
             ExtractionResult with populated fields.

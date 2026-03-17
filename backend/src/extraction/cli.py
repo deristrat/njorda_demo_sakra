@@ -19,7 +19,8 @@ from .base import BaseExtractor
 from .models import ExtractionResult
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent  # backend/
-TEST_PDF_DIR = BACKEND_DIR / "test_pdfs"
+PROJECT_ROOT = BACKEND_DIR.parent
+TEST_PDF_DIR = PROJECT_ROOT / "test_pdfs"
 
 TEST_PDFS = {
     "1": "1_perfect_advice.pdf",
@@ -287,11 +288,11 @@ def print_comparison(filename: str, page_count: int | None, runs: list[RunResult
     print()
 
 
-async def run_single(extractor: BaseExtractor, pdf_path: Path) -> RunResult:
+async def run_single(extractor: BaseExtractor, pdf_data: bytes, filename: str) -> RunResult:
     """Run a single extractor on a single PDF, capturing timing and errors."""
     t0 = time.monotonic()
     try:
-        result = await extractor.extract(pdf_path)
+        result = await extractor.extract(pdf_data, filename)
         elapsed = time.monotonic() - t0
         return RunResult(extractor.name, result, None, elapsed)
     except Exception as e:
@@ -303,7 +304,8 @@ async def run_pdf(
     extractors: list[BaseExtractor], path: Path
 ) -> tuple[str, int | None, list[RunResult]]:
     """Run all extractors on one PDF. Returns (filename, page_count, runs)."""
-    tasks = [run_single(ext, path) for ext in extractors]
+    pdf_data = path.read_bytes()
+    tasks = [run_single(ext, pdf_data, path.name) for ext in extractors]
     runs = await asyncio.gather(*tasks)
 
     page_count = None
