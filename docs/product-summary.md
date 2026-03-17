@@ -1,0 +1,15 @@
+# Säkra Compliance Copilot – Product Overview
+
+**AI-powered compliance and documentation management for financial advisors**
+
+---
+
+Säkra Compliance Copilot is a purpose-built tool that helps financial advisory firms manage the growing burden of regulatory compliance. Swedish advisors face increasingly complex documentation requirements under MiFID II, IDD, and GDPR — requirements that consume valuable time and carry real risk when not met. Säkra addresses this by combining intelligent document analysis with a flexible compliance engine, giving both individual advisors and compliance teams a shared, clear view of where things stand and what needs attention.
+
+At the heart of Säkra is its AI-driven document analysis. Advisors upload their client documentation — suitability assessments, investment advice, pension transfers — and the system automatically reads and extracts the key information: client details, risk profiles, product recommendations, and advisory reasoning. Each document is then evaluated against the firm's compliance rules and assigned a simple traffic-light score (green, yellow, red), so advisors get immediate, actionable feedback on whether their documentation meets the required standard. No waiting for a manual review cycle — the feedback is there in seconds.
+
+For compliance officers and managers, Säkra provides a company-wide dashboard with full visibility across all advisors, clients, and documents. Compliance teams can define and manage their own rule sets — from basic checks like "does the document include a risk profile" to AI-evaluated criteria like "is the suitability reasoning clearly justified." Company-wide reports can be generated on demand, showing average scores, the most frequently failed rules, and per-advisor breakdowns. This makes it straightforward to identify where training is needed, spot patterns across the organisation, and maintain a documented audit trail for regulatory review.
+
+Säkra also includes a built-in messaging system and an AI chat assistant. Compliance officers can send targeted feedback to advisors about specific documents, and advisors can respond directly within the platform. The AI assistant lets users ask natural-language questions — an advisor might ask "show me all documents for client Andersson," while a compliance officer might ask "which advisors have the lowest compliance rates this month." Every action in the system is logged in a full audit trail, providing the kind of traceability that regulators expect.
+
+The system is designed around three distinct roles — advisor, compliance officer, and administrator — each seeing exactly the interface and data relevant to their responsibilities. Advisors see their own clients and documents with clear compliance feedback. Compliance officers see the full picture with tools to manage rules, generate reports, and communicate with the team. The result is a streamlined workflow where documentation quality improves continuously, compliance risks are caught early, and the firm can demonstrate a robust, auditable process to regulators and clients alike.
