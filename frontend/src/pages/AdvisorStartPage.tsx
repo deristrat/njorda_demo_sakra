@@ -97,14 +97,14 @@ export function AdvisorStartPage() {
       path: "/inbox",
     },
     {
-      label: "Dokument totalt",
+      label: "Dokument",
       value: totalDocs,
       icon: FileText,
       color: "text-blue-600 bg-blue-50",
       path: "/archive",
     },
     {
-      label: "Godkända",
+      label: "Dokument – godkända",
       value: greenDocs,
       sub: reviewedDocs > 0 ? `${complianceRate}% godkända` : undefined,
       icon: CheckCircle2,

@@ -54,20 +54,20 @@ export function ComplianceStartPage() {
 
   const statCards = [
     {
-      label: "Dokument totalt",
+      label: "Dokument",
       value: totalDocs,
       icon: FileText,
       color: "text-blue-600 bg-blue-50",
     },
     {
-      label: "Godkända",
+      label: "Dokument – godkända",
       value: greenDocs,
       sub: reviewedDocs > 0 ? `${complianceRate}% av granskade` : undefined,
       icon: CheckCircle2,
       color: "text-emerald-600 bg-emerald-50",
     },
     {
-      label: "Avvikelser",
+      label: "Dokument – avvikelser",
       value: redDocs + yellowDocs,
       sub: redDocs > 0 ? `${redDocs} röda, ${yellowDocs} gula` : undefined,
       icon: AlertTriangle,

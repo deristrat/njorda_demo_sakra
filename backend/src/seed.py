@@ -6,6 +6,7 @@ from sqlalchemy import select
 
 from src.database import SessionLocal
 from src.models import User
+from src.models.advisor import Advisor
 
 _admin_pw = os.environ.get("ADMIN_PASSWORD", "admin")
 
@@ -43,6 +44,17 @@ def seed() -> None:
                 user.set_password(u["password"])
                 db.add(user)
                 print(f"Created user '{u['username']}' (role={u['role']}).")
+
+        # Ensure Advisor records exist for each advisor-role user
+        for u in SEED_USERS:
+            if u["role"] != "advisor":
+                continue
+            existing_advisor = db.execute(
+                select(Advisor).where(Advisor.advisor_name == u["name"])
+            ).scalar_one_or_none()
+            if not existing_advisor:
+                db.add(Advisor(advisor_name=u["name"], firm_name="Säkra"))
+                print(f"Created advisor record for '{u['name']}'.")
 
         # Remove stale users not in the current seed set
         seed_usernames = {u["username"] for u in SEED_USERS}

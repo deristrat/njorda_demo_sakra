@@ -18,6 +18,7 @@ import {
   FileBarChart,
   Inbox,
   Archive,
+  X,
 } from "lucide-react";
 import {
   Sidebar,
@@ -322,6 +323,16 @@ export function AppSidebar() {
                     <span>Byt användare</span>
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
+                {isImpersonating && (
+                  <Badge
+                    variant="secondary"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 bg-amber-100 text-amber-800 border-amber-300 text-[10px] px-1.5 py-0 gap-1 cursor-pointer hover:bg-amber-200 z-10"
+                    onClick={handleStopImpersonation}
+                  >
+                    Aktiv
+                    <X className="size-3" />
+                  </Badge>
+                )}
                 <DropdownMenuContent side="top" className="w-56">
                   {isImpersonating && (
                     <>
