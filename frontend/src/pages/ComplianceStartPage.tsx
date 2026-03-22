@@ -139,23 +139,20 @@ export function ComplianceStartPage() {
       <AppHeader title="Start" />
       <div className="space-y-6 p-6">
         {/* KPI cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
           {statCards.map((card) => (
             <Card key={card.label}>
-              <CardContent className="flex items-center gap-4 px-5 py-3">
+              <CardContent className="flex items-center gap-3 p-3">
                 <div
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${card.color}`}
+                  className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${card.color}`}
                 >
-                  <card.icon className="size-5" />
+                  <card.icon className="size-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground">{card.label}</p>
-                  <p className="font-brand text-2xl tracking-tight">
+                  <p className="text-xs text-muted-foreground">{card.label}</p>
+                  <p className="font-brand text-lg leading-tight tracking-tight">
                     {loading ? "—" : card.value}
                   </p>
-                  {card.sub && !loading && (
-                    <p className="text-xs text-muted-foreground">{card.sub}</p>
-                  )}
                 </div>
               </CardContent>
             </Card>

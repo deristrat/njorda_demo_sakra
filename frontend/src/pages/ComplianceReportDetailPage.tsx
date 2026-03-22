@@ -80,9 +80,9 @@ function KpiCard({
 }) {
   return (
     <Card>
-      <CardContent className="py-4">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="font-brand text-2xl">{value}</p>
+      <CardContent className="px-4 py-2.5">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+        <p className="mt-1 font-brand text-xl font-semibold tracking-tight">{value}</p>
         {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
       </CardContent>
     </Card>
