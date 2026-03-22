@@ -5,7 +5,10 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import uuid
+
+log = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 from fastapi.responses import Response, StreamingResponse
@@ -175,7 +178,7 @@ async def process_documents(
                 try:
                     run_compliance_for_document(doc, db)
                 except Exception:
-                    pass
+                    log.exception("Compliance check failed for document %s", doc.id)
 
                 yield _sse(
                     {

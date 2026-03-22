@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import {
   FileText,
   Users,
@@ -11,6 +12,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdvisorChat } from "@/components/chat/AdvisorChat";
 import { fetchDocuments, fetchAdvisors, fetchClients } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { useChat } from "@/lib/chat-context";
 import type { DocumentSummary, Advisor, Client } from "@/types";
 
@@ -24,6 +26,11 @@ const COMPLIANCE_SUBTITLE =
   "Fråga om rådgivare, dokument eller compliance-status för hela organisationen";
 
 export function ComplianceStartPage() {
+  const navigate = useNavigate();
+  const { name, isImpersonating, impersonatingAs } = useAuth();
+  const displayName = isImpersonating && impersonatingAs
+    ? impersonatingAs.name
+    : name;
   const { messages } = useChat();
   const chatActive = messages.length > 0;
   const [docs, setDocs] = useState<DocumentSummary[]>([]);
@@ -58,6 +65,7 @@ export function ComplianceStartPage() {
       value: totalDocs,
       icon: FileText,
       color: "text-blue-600 bg-blue-50",
+      path: "/documents",
     },
     {
       label: "Dokument – godkända",
@@ -65,6 +73,7 @@ export function ComplianceStartPage() {
       sub: reviewedDocs > 0 ? `${complianceRate}% av granskade` : undefined,
       icon: CheckCircle2,
       color: "text-emerald-600 bg-emerald-50",
+      path: "/documents",
     },
     {
       label: "Dokument – avvikelser",
@@ -72,12 +81,14 @@ export function ComplianceStartPage() {
       sub: redDocs > 0 ? `${redDocs} röda, ${yellowDocs} gula` : undefined,
       icon: AlertTriangle,
       color: "text-amber-600 bg-amber-50",
+      path: "/documents",
     },
     {
       label: "Rådgivare",
       value: advisors.length,
       icon: Briefcase,
       color: "text-violet-600 bg-violet-50",
+      path: "/advisors",
     },
     {
       label: "Klienter",
@@ -88,12 +99,14 @@ export function ComplianceStartPage() {
           : undefined,
       icon: Users,
       color: "text-teal-600 bg-teal-50",
+      path: "/clients",
     },
     {
       label: "Regelefterlevnad",
       value: `${complianceRate}%`,
       icon: ShieldCheck,
       color: "text-primary bg-primary/10",
+      path: "/settings/compliance",
     },
   ];
 
@@ -104,7 +117,11 @@ export function ComplianceStartPage() {
         <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
           <div className="grid flex-none gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {statCards.map((card) => (
-              <Card key={card.label}>
+              <Card
+                key={card.label}
+                className="cursor-pointer transition-colors hover:bg-muted/50"
+                onClick={() => navigate(card.path)}
+              >
                 <CardContent className="flex items-center gap-3 p-3">
                   <div
                     className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${card.color}`}
@@ -138,10 +155,23 @@ export function ComplianceStartPage() {
     <>
       <AppHeader title="Start" />
       <div className="space-y-6 p-6">
+        <div className="py-4">
+          <h1 className="font-brand text-2xl tracking-tight">
+            Välkommen tillbaka{displayName ? `, ${displayName.split(" ")[0]}` : ""}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Här är en överblick över organisationens compliance-status
+          </p>
+        </div>
+
         {/* KPI cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
           {statCards.map((card) => (
-            <Card key={card.label}>
+            <Card
+              key={card.label}
+              className="cursor-pointer transition-colors hover:bg-muted/50"
+              onClick={() => navigate(card.path)}
+            >
               <CardContent className="flex items-center gap-3 p-3">
                 <div
                   className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${card.color}`}

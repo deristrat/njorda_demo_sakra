@@ -173,6 +173,6 @@ def check_custom(
 
     Looks up function_name in a custom function registry.
     """
-    # No custom functions registered yet
     function_name = params.get("function_name", "")
-    raise NotImplementedError(f"Custom rule function not found: {function_name}")
+    log.warning("Custom rule function not registered: %s", function_name)
+    return []
