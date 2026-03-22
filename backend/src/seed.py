@@ -1,12 +1,16 @@
 """Seed the database with initial data."""
 
+import os
+
 from sqlalchemy import select
 
 from src.database import SessionLocal
 from src.models import User
 
+_admin_pw = os.environ.get("ADMIN_PASSWORD", "admin")
+
 SEED_USERS = [
-    {"username": "admin", "password": "admin", "role": "njorda_admin", "name": "Admin Njorda", "email": "admin@njorda.se"},
+    {"username": "admin", "password": _admin_pw, "role": "njorda_admin", "name": "Admin Njorda", "email": "admin@njorda.se"},
     {"username": "maria", "password": "demo", "role": "compliance", "name": "Maria Karlsson", "email": "maria@sakra.se"},
     {"username": "johan", "password": "demo", "role": "advisor", "name": "Johan Berg", "email": "johan@sakra.se"},
     {"username": "karin", "password": "demo", "role": "advisor", "name": "Karin Ek", "email": "karin@sakra.se"},
