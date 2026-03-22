@@ -11,8 +11,11 @@ Usage:
 from __future__ import annotations
 
 import copy
+import logging
 import uuid
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy import select
 
@@ -740,6 +743,9 @@ TEST_PDF_DIR = (
 
 
 def seed_test_documents() -> None:
+    logger.info("Seeding test documents...")
+    logger.info("TEST_PDF_DIR=%s (exists=%s)", TEST_PDF_DIR, TEST_PDF_DIR.is_dir())
+
     db = SessionLocal()
     try:
         # Ensure compliance rules exist
@@ -753,14 +759,16 @@ def seed_test_documents() -> None:
 
         created = 0
         for doc_def in TEST_DOCUMENTS:
+            filename = doc_def["filename"]
+
             # Skip if document already exists
             existing = db.execute(
                 select(Document).where(
-                    Document.original_filename == doc_def["filename"]
+                    Document.original_filename == filename
                 )
             ).scalars().first()
             if existing:
-                print(f"  Skipping {doc_def['filename']} (already exists)")
+                logger.info("Skipping %s (already exists)", filename)
                 continue
 
             # Build extraction data
@@ -777,54 +785,69 @@ def seed_test_documents() -> None:
             advisor = None
             if doc_def.get("advisor_name"):
                 advisor = _get_advisor(db, doc_def["advisor_name"])
+                if not advisor:
+                    logger.warning(
+                        "%s: advisor '%s' not found in DB", filename, doc_def["advisor_name"]
+                    )
 
-            # Load PDF file data from test_pdfs/ if available
-            pdf_path = TEST_PDF_DIR / doc_def["filename"]
-            file_data = pdf_path.read_bytes() if pdf_path.exists() else None
-            file_size = len(file_data) if file_data else 50000
+            # Load PDF file data from test_pdfs/
+            pdf_path = TEST_PDF_DIR / filename
+            if pdf_path.exists():
+                file_data = pdf_path.read_bytes()
+                file_size = len(file_data)
+            else:
+                logger.warning("%s: PDF file not found at %s — file_data will be NULL", filename, pdf_path)
+                file_data = None
+                file_size = 50000
 
             # Create document
-            doc = Document(
-                original_filename=doc_def["filename"],
-                stored_filename=extraction_data["source_filename"],
-                file_hash=uuid.uuid4().hex,
-                file_size=file_size,
-                file_data=file_data,
-                mime_type="application/pdf",
-                status="completed",
-                user_id=admin_user.id,
-                client_id=client.id if client else None,
-                advisor_id=advisor.id if advisor else None,
-            )
-            db.add(doc)
-            db.flush()
+            try:
+                doc = Document(
+                    original_filename=filename,
+                    stored_filename=extraction_data["source_filename"],
+                    file_hash=uuid.uuid4().hex,
+                    file_size=file_size,
+                    file_data=file_data,
+                    mime_type="application/pdf",
+                    status="completed",
+                    user_id=admin_user.id,
+                    client_id=client.id if client else None,
+                    advisor_id=advisor.id if advisor else None,
+                )
+                db.add(doc)
+                db.flush()
 
-            # Create extraction
-            ext = DocumentExtraction(
-                document_id=doc.id,
-                extractor_name="claude-sonnet",
-                status="completed",
-                extraction_data=extraction_data,
-                document_type=extraction_data["document_type"],
-                document_date=extraction_data.get("document_date"),
-                page_count=extraction_data.get("page_count"),
-                client_name=doc_def["client_name"],
-                advisor_name=doc_def["advisor_name"],
-            )
-            db.add(ext)
-            db.commit()
+                # Create extraction
+                ext = DocumentExtraction(
+                    document_id=doc.id,
+                    extractor_name="claude-sonnet",
+                    status="completed",
+                    extraction_data=extraction_data,
+                    document_type=extraction_data["document_type"],
+                    document_date=extraction_data.get("document_date"),
+                    page_count=extraction_data.get("page_count"),
+                    client_name=doc_def["client_name"],
+                    advisor_name=doc_def["advisor_name"],
+                )
+                db.add(ext)
+                db.commit()
 
-            # Run compliance checks
-            report = run_compliance_for_document(doc, db)
-            print(
-                f"  {doc_def['filename']}: score={report.score}, "
-                f"status={report.status}, "
-                f"failed={[o.rule_id for o in report.outcomes if o.status == 'failed']}, "
-                f"expected={doc_def['expected_rule']}"
-            )
-            created += 1
+                # Run compliance checks
+                report = run_compliance_for_document(doc, db)
+                logger.info(
+                    "%s: score=%s, status=%s, failed=%s, expected=%s",
+                    filename, report.score, report.status,
+                    [o.rule_id for o in report.outcomes if o.status == "failed"],
+                    doc_def["expected_rule"],
+                )
+                created += 1
+            except Exception:
+                db.rollback()
+                logger.exception("Failed to seed %s", filename)
 
-        print(f"\nSeeded {created} test documents.")
+        logger.info("Seeded %d test documents.", created)
+    except Exception:
+        logger.exception("Test document seeding failed")
     finally:
         db.close()
 
