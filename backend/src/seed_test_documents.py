@@ -142,7 +142,13 @@ TEST_DOCUMENTS = [
                     "amount": None,
                     "percentage": 20.0,
                     "motivation": (
-                        "Svensk småbolagsfond (risk 5/7) för extra tillväxtpotential. "
+                        "Svensk småbolagsfond (risk 5/7) som utgör 20% av portföljen. "
+                        "Trots att fondens individuella riskklass överstiger kundens "
+                        "riskprofil (4/7) hålls portföljens sammanvägda risk inom ramen "
+                        "för kundens riskvilja tack vare 40% allokering till obligations- "
+                        "och räntefonder (risk 1-2/7). Kundens långa tidshorisont (20 år) "
+                        "och goda förmåga att bära förluster motiverar en begränsad "
+                        "exponering mot småbolag för extra tillväxtpotential. "
                         "Artikel 8 SFDR, möter kundens hållbarhetspreferenser."
                     ),
                 },
