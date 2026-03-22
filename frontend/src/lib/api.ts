@@ -64,7 +64,10 @@ export function processDocumentsSSE(
   onDone: () => void,
   onError: (err: Error) => void,
 ): () => void {
-  const url = `${BASE}/process?ids=${ids.join(",")}`;
+  const token = localStorage.getItem("auth_token");
+  const params = new URLSearchParams({ ids: ids.join(",") });
+  if (token) params.set("token", token);
+  const url = `${BASE}/process?${params}`;
   const evtSource = new EventSource(url);
 
   evtSource.onmessage = (e) => {
