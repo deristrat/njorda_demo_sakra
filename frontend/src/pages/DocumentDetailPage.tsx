@@ -169,6 +169,8 @@ export function DocumentDetailPage() {
                 documentId={doc.id}
                 documentFilename={doc.original_filename}
                 clientId={doc.client_id}
+                advisorId={doc.advisor_id}
+                advisorName={data?.advisor?.advisor_name}
               />
             )}
           </div>

@@ -169,6 +169,15 @@ def create_message(
         document = db.get(Document, payload.document_id)
         if not document:
             raise HTTPException(404, "Dokumentet hittades inte")
+        if not recipient_user_id and document.advisor_id:
+            # Prefer the document's advisor as recipient
+            advisor = db.get(Advisor, document.advisor_id)
+            if advisor:
+                matched_user = db.execute(
+                    select(User).where(User.name == advisor.advisor_name)
+                ).scalar_one_or_none()
+                if matched_user:
+                    recipient_user_id = matched_user.id
         if not recipient_user_id and document.user_id:
             recipient_user_id = document.user_id
 
