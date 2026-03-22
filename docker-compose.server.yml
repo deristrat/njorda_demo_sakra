@@ -1,6 +1,8 @@
 services:
   sakra-api:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     restart: always
     expose:
       - "8000"

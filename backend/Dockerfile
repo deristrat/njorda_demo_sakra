@@ -7,7 +7,7 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # Copy dependency files
-COPY pyproject.toml ./
+COPY backend/pyproject.toml ./
 
 # Install dependencies
 RUN uv sync --no-dev --no-install-project
@@ -21,9 +21,10 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 
 # Copy application code
-COPY alembic.ini ./
-COPY alembic ./alembic
-COPY src ./src
+COPY backend/alembic.ini ./
+COPY backend/alembic ./alembic
+COPY backend/src ./src
+COPY test_pdfs ./test_pdfs
 
 # Create uploads directory
 RUN mkdir -p /app/uploads

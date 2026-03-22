@@ -729,7 +729,14 @@ def _get_advisor(db, advisor_name: str) -> Advisor | None:
     ).scalar_one_or_none()
 
 
-TEST_PDF_DIR = Path(__file__).resolve().parent.parent.parent / "test_pdfs"
+# In Docker: /app/src/.. -> /app/test_pdfs
+# Local dev: backend/src/.. -> backend/../test_pdfs
+_app_dir = Path(__file__).resolve().parent.parent
+TEST_PDF_DIR = (
+    _app_dir / "test_pdfs"
+    if (_app_dir / "test_pdfs").is_dir()
+    else _app_dir.parent / "test_pdfs"
+)
 
 
 def seed_test_documents() -> None:
