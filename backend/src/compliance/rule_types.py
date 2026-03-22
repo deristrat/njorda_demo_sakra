@@ -142,15 +142,13 @@ def check_ai_evaluate(
             model=AI_MODEL,
             max_tokens=256,
             system=_AI_SYSTEM,
-            messages=[{"role": "user", "content": user_message}],
+            messages=[
+                {"role": "user", "content": user_message},
+                {"role": "assistant", "content": "{"},
+            ],
         )
 
-        text = response.content[0].text.strip()
-        # Strip markdown code fences if present
-        if text.startswith("```"):
-            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-            if text.endswith("```"):
-                text = text[:-3].strip()
+        text = "{" + response.content[0].text.strip()
         result = json.loads(text)
 
         if not result.get("passed", True):
