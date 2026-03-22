@@ -1,5 +1,6 @@
 """Seed the database with test documents for compliance engine demo.
 
+
 Creates investment_advice documents based on the perfect_advice template,
 each with targeted gaps to trigger specific compliance rules.
 
