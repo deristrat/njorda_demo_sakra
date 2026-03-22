@@ -750,7 +750,7 @@ def seed_test_documents() -> None:
                 select(Document).where(
                     Document.original_filename == doc_def["filename"]
                 )
-            ).scalar_one_or_none()
+            ).scalars().first()
             if existing:
                 print(f"  Skipping {doc_def['filename']} (already exists)")
                 continue
