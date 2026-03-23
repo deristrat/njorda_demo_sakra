@@ -508,7 +508,7 @@ def update_thresholds(
 
 
 @router.get("/documents/{document_id}")
-def get_document_compliance(
+async def get_document_compliance(
     document_id: int,
     db: Session = Depends(get_db),
     user: TokenInfo = Depends(get_effective_user),
@@ -528,11 +528,11 @@ def get_document_compliance(
         return _build_report_from_stored(document_id, db)
 
     # Otherwise run checks
-    return _run_compliance_check(doc, db)
+    return await _run_compliance_check(doc, db)
 
 
 @router.post("/documents/{document_id}/recheck")
-def recheck_document_compliance(
+async def recheck_document_compliance(
     document_id: int,
     db: Session = Depends(get_db),
     user: TokenInfo = Depends(get_effective_user),
@@ -547,7 +547,7 @@ def recheck_document_compliance(
 
     _check_doc_access(doc, user)
 
-    return _run_compliance_check(doc, db)
+    return await _run_compliance_check(doc, db)
 
 
 # ---------------------------------------------------------------------------
@@ -555,12 +555,12 @@ def recheck_document_compliance(
 # ---------------------------------------------------------------------------
 
 
-def run_compliance_for_document(doc: Document, db: Session) -> ComplianceReport | None:
+async def run_compliance_for_document(doc: Document, db: Session) -> ComplianceReport | None:
     """Run compliance checks for a document. Called from extraction pipeline."""
-    return _run_compliance_check(doc, db)
+    return await _run_compliance_check(doc, db)
 
 
-def _run_compliance_check(doc: Document, db: Session) -> ComplianceReport:
+async def _run_compliance_check(doc: Document, db: Session) -> ComplianceReport:
     """Internal: run checks, store results, update document."""
     # Ensure rules are seeded
     seed_default_rules(db)
@@ -586,7 +586,7 @@ def _run_compliance_check(doc: Document, db: Session) -> ComplianceReport:
     rules = get_rules_for_document(document_type, db)
 
     # Run checks
-    report = check_document(extraction, rules, db)
+    report = await check_document(extraction, rules, db)
 
     # Clear previous findings
     db.execute(delete(ComplianceFinding).where(ComplianceFinding.document_id == doc.id))

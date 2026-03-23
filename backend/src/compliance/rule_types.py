@@ -109,10 +109,10 @@ _AI_SYSTEM = (
 
 
 @rule_type("ai_evaluate")
-def check_ai_evaluate(
+async def check_ai_evaluate(
     data: ExtractionResult, params: dict[str, Any], rule_name: str
 ) -> list[Finding]:
-    """LLM-based compliance evaluation using Claude."""
+    """LLM-based compliance evaluation using Claude (async)."""
     prompt = params.get("prompt", "")
     context_fields = params.get("context_fields", [])
 
@@ -137,8 +137,8 @@ def check_ai_evaluate(
     )
 
     try:
-        client = anthropic.Anthropic()
-        response = client.messages.create(
+        client = anthropic.AsyncAnthropic()
+        response = await client.messages.create(
             model=AI_MODEL,
             max_tokens=256,
             system=_AI_SYSTEM,

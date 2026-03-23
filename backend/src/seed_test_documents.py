@@ -10,6 +10,7 @@ Usage:
 
 from __future__ import annotations
 
+import asyncio
 import copy
 import logging
 import uuid
@@ -839,7 +840,7 @@ def seed_test_documents() -> None:
                 db.commit()
 
                 # Run compliance checks
-                report = run_compliance_for_document(doc, db)
+                report = asyncio.run(run_compliance_for_document(doc, db))
                 logger.info(
                     "%s: score=%s, status=%s, failed=%s, expected=%s",
                     filename, report.score, report.status,

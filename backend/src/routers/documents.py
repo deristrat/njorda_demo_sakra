@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import time
 import uuid
 
 log = logging.getLogger(__name__)
@@ -148,9 +149,13 @@ async def process_documents(
             )
 
             try:
+                t_doc = time.perf_counter()
                 if not doc.file_data:
                     raise ExtractionError("Dokumentet saknar fildata i databasen")
+                log.info("[doc %d] Extraction starting (%s)", doc.id, doc.original_filename)
+                t_ext = time.perf_counter()
                 result = await extractor.extract(doc.file_data, doc.original_filename)
+                log.info("[doc %d] Extraction done in %.1fs", doc.id, time.perf_counter() - t_ext)
                 result_data = result.model_dump(mode="json")
 
                 extraction.status = "completed"
@@ -174,11 +179,16 @@ async def process_documents(
 
                 db.commit()
 
-                # Run compliance checks (Tier 1 only — fast)
+                # Run compliance checks
                 try:
-                    run_compliance_for_document(doc, db)
+                    log.info("[doc %d] Compliance checks starting", doc.id)
+                    t_comp = time.perf_counter()
+                    await run_compliance_for_document(doc, db)
+                    log.info("[doc %d] Compliance checks done in %.1fs", doc.id, time.perf_counter() - t_comp)
                 except Exception:
                     log.exception("Compliance check failed for document %s", doc.id)
+
+                log.info("[doc %d] Total processing: %.1fs", doc.id, time.perf_counter() - t_doc)
 
                 yield _sse(
                     {
@@ -268,7 +278,7 @@ def delete_documents(
 
 
 @router.post("/bulk-recheck")
-def bulk_recheck_compliance(
+async def bulk_recheck_compliance(
     body: dict,
     db: Session = Depends(get_db),
     user: TokenInfo = Depends(get_effective_user),
@@ -290,7 +300,7 @@ def bulk_recheck_compliance(
     results = []
     for doc in docs:
         try:
-            run_compliance_for_document(doc, db)
+            await run_compliance_for_document(doc, db)
             results.append({"id": doc.id, "status": "ok"})
         except Exception as exc:
             results.append({"id": doc.id, "status": "error", "message": str(exc)})
