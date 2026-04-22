@@ -9,13 +9,43 @@ import { DocumentsTable } from "@/components/documents/DocumentsTable";
 import { fetchAdvisor, fetchAdvisorDocuments } from "@/lib/api";
 import { SendCommentDialog } from "@/components/notifications/SendCommentDialog";
 import { useAuth } from "@/lib/auth";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { AdvisorDetail, DocumentSummary } from "@/types";
 import { toast } from "sonner";
+
+const translations = {
+  sv: {
+    headerAdvisor: "Rådgivare",
+    somethingWentWrong: "Något gick fel",
+    advisorNotFound: "Rådgivaren hittades inte.",
+    back: "Tillbaka",
+    regardingAdvisor: "Angående rådgivare",
+    advisorInfo: "Rådgivarinformation",
+    name: "Namn",
+    firm: "Företag",
+    license: "Licens",
+    documents: "Dokument",
+  },
+  en: {
+    headerAdvisor: "Advisor",
+    somethingWentWrong: "Something went wrong",
+    advisorNotFound: "Advisor not found.",
+    back: "Back",
+    regardingAdvisor: "Regarding advisor",
+    advisorInfo: "Advisor information",
+    name: "Name",
+    firm: "Firm",
+    license: "License",
+    documents: "Documents",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
 export function AdvisorDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { effectiveRole } = useAuth();
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const [advisor, setAdvisor] = useState<AdvisorDetail | null>(null);
   const [docs, setDocs] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,18 +57,18 @@ export function AdvisorDetailPage() {
     setDocsLoading(true);
     fetchAdvisorDocuments(advisorId)
       .then(setDocs)
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
+      .catch((e) => toast.error(e instanceof Error ? e.message : t.somethingWentWrong))
       .finally(() => setDocsLoading(false));
-  }, [advisorId]);
+  }, [advisorId, t.somethingWentWrong]);
 
   useEffect(() => {
     if (!id) return;
     fetchAdvisor(advisorId)
       .then(setAdvisor)
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
+      .catch((e) => toast.error(e instanceof Error ? e.message : t.somethingWentWrong))
       .finally(() => setLoading(false));
     loadDocs();
-  }, [id, advisorId, loadDocs]);
+  }, [id, advisorId, loadDocs, t.somethingWentWrong]);
 
   useEffect(() => {
     if (advisor) {
@@ -49,7 +79,7 @@ export function AdvisorDetailPage() {
   if (loading) {
     return (
       <>
-        <AppHeader title="Rådgivare" />
+        <AppHeader title={t.headerAdvisor} />
         <div className="p-6 space-y-4">
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-48 w-full" />
@@ -61,9 +91,9 @@ export function AdvisorDetailPage() {
   if (!advisor) {
     return (
       <>
-        <AppHeader title="Rådgivare" />
+        <AppHeader title={t.headerAdvisor} />
         <div className="p-6">
-          <p className="text-muted-foreground">Rådgivaren hittades inte.</p>
+          <p className="text-muted-foreground">{t.advisorNotFound}</p>
         </div>
       </>
     );
@@ -76,14 +106,14 @@ export function AdvisorDetailPage() {
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => navigate("/advisors")}>
             <ArrowLeft className="mr-1 size-4" />
-            Tillbaka
+            {t.back}
           </Button>
           {effectiveRole !== "advisor" && (
             <div className="ml-auto">
               <SendCommentDialog
                 advisorId={advisorId}
                 advisorName={advisor.advisor_name}
-                defaultSubject={`Angående rådgivare: ${advisor.advisor_name}`}
+                defaultSubject={`${t.regardingAdvisor}: ${advisor.advisor_name}`}
               />
             </div>
           )}
@@ -91,24 +121,24 @@ export function AdvisorDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Rådgivarinformation</CardTitle>
+            <CardTitle className="text-base">{t.advisorInfo}</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
               <div>
-                <dt className="text-xs text-muted-foreground">Namn</dt>
+                <dt className="text-xs text-muted-foreground">{t.name}</dt>
                 <dd className="text-sm font-medium">
                   {advisor.advisor_name}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Företag</dt>
+                <dt className="text-xs text-muted-foreground">{t.firm}</dt>
                 <dd className="text-sm font-medium">
                   {advisor.firm_name || "—"}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Licens</dt>
+                <dt className="text-xs text-muted-foreground">{t.license}</dt>
                 <dd className="text-sm font-medium">
                   {advisor.license_number || "—"}
                 </dd>
@@ -118,7 +148,7 @@ export function AdvisorDetailPage() {
         </Card>
 
         <div className="space-y-4">
-          <h2 className="text-base font-semibold">Dokument</h2>
+          <h2 className="text-base font-semibold">{t.documents}</h2>
           <DocumentsTable
             externalData={docs}
             externalLoading={docsLoading}

@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { uploadDocuments, processDocumentsSSE } from "@/lib/api";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { ProcessEvent } from "@/types";
 
 type Step = "select" | "processing" | "results";
@@ -28,23 +29,87 @@ interface FileState {
   clientName?: string;
 }
 
-const DOC_TYPE_LABELS: Record<string, string> = {
-  investment_advice: "Investeringsrådgivning",
-  pension_transfer: "Pensionsflytt",
-  insurance_advice: "Försäkringsrådgivning",
-  suitability_assessment: "Lämplighetsbedömning",
-  unknown: "Okänd",
-};
+const translations = {
+  sv: {
+    pageTitle: "Ladda upp dokument — Säkra",
+    headerTitle: "Ladda upp dokument",
+    uploadHeadline: "Ladda upp rådgivningsdokument",
+    uploadHint: "Dra och släpp filer, eller klicka för att bläddra",
+    pdfLimit: "PDF — upp till 50 MB",
+    fileSelectedSingular: "fil vald",
+    fileSelectedPlural: "filer valda",
+    uploadBtnSingular: "fil",
+    uploadBtnPlural: "filer",
+    uploadAction: "Ladda upp",
+    uploading: "Laddar upp...",
+    waitingAnalysis: "Väntar på analys...",
+    uploadFailed: "Uppladdning misslyckades",
+    processingProgress: "Bearbetar",
+    processingOf: "av",
+    processingDocs: "dokument...",
+    processingDone: "Bearbetning klar",
+    view: "Visa",
+    showAll: "Visa alla dokument",
+    uploadMore: "Ladda upp fler",
+    docTypeInvestment: "Investeringsrådgivning",
+    docTypePension: "Pensionsflytt",
+    docTypeInsurance: "Försäkringsrådgivning",
+    docTypeSuitability: "Lämplighetsbedömning",
+    docTypeUnknown: "Okänd",
+  },
+  en: {
+    pageTitle: "Upload documents — Säkra",
+    headerTitle: "Upload documents",
+    uploadHeadline: "Upload advisory documents",
+    uploadHint: "Drag and drop files, or click to browse",
+    pdfLimit: "PDF — up to 50 MB",
+    fileSelectedSingular: "file selected",
+    fileSelectedPlural: "files selected",
+    uploadBtnSingular: "file",
+    uploadBtnPlural: "files",
+    uploadAction: "Upload",
+    uploading: "Uploading…",
+    waitingAnalysis: "Waiting for analysis…",
+    uploadFailed: "Upload failed",
+    processingProgress: "Processing",
+    processingOf: "of",
+    processingDocs: "documents…",
+    processingDone: "Processing complete",
+    view: "View",
+    showAll: "Show all documents",
+    uploadMore: "Upload more",
+    docTypeInvestment: "Investment advice",
+    docTypePension: "Pension transfer",
+    docTypeInsurance: "Insurance advice",
+    docTypeSuitability: "Suitability assessment",
+    docTypeUnknown: "Unknown",
+  },
+} satisfies Record<Lang, Record<string, string>>;
+
+type T = typeof translations["sv"];
+
+function getDocTypeLabels(t: T): Record<string, string> {
+  return {
+    investment_advice: t.docTypeInvestment,
+    pension_transfer: t.docTypePension,
+    insurance_advice: t.docTypeInsurance,
+    suitability_assessment: t.docTypeSuitability,
+    unknown: t.docTypeUnknown,
+  };
+}
 
 export function UploadPage() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const t = translations[lang];
+  const DOC_TYPE_LABELS = getDocTypeLabels(t);
   const [step, setStep] = useState<Step>("select");
   const [fileStates, setFileStates] = useState<FileState[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
   useEffect(() => {
-    document.title = "Ladda upp dokument — Säkra";
-  }, []);
+    document.title = t.pageTitle;
+  }, [t.pageTitle]);
 
   const handleFiles = useCallback((newFiles: FileList | null) => {
     if (!newFiles) return;
@@ -90,7 +155,7 @@ export function UploadPage() {
 
     // Mark all as uploading
     setFileStates((prev) =>
-      prev.map((f) => ({ ...f, status: "uploading" as const, message: "Laddar upp..." })),
+      prev.map((f) => ({ ...f, status: "uploading" as const, message: t.uploading })),
     );
 
     try {
@@ -103,7 +168,7 @@ export function UploadPage() {
           const uploaded = result.documents[i];
           if (uploaded) {
             idMap.set(uploaded.id, i);
-            return { ...f, docId: uploaded.id, status: "processing" as const, message: "Väntar på analys..." };
+            return { ...f, docId: uploaded.id, status: "processing" as const, message: t.waitingAnalysis };
           }
           return f;
         }),
@@ -140,7 +205,7 @@ export function UploadPage() {
     } catch (err) {
       console.error("Upload error:", err);
       setFileStates((prev) =>
-        prev.map((f) => ({ ...f, status: "failed" as const, message: "Uppladdning misslyckades" })),
+        prev.map((f) => ({ ...f, status: "failed" as const, message: t.uploadFailed })),
       );
       setStep("results");
     }
@@ -153,7 +218,7 @@ export function UploadPage() {
 
   return (
     <>
-      <AppHeader title="Ladda upp dokument" />
+      <AppHeader title={t.headerTitle} />
       <div className="p-6">
         {step === "select" && (
           <Card>
@@ -176,14 +241,14 @@ export function UploadPage() {
                   </div>
                   <div>
                     <p className="text-lg font-semibold">
-                      Ladda upp rådgivningsdokument
+                      {t.uploadHeadline}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Dra och släpp filer, eller klicka för att bläddra
+                      {t.uploadHint}
                     </p>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    PDF — upp till 50 MB
+                    {t.pdfLimit}
                   </p>
                 </div>
                 <input
@@ -200,7 +265,7 @@ export function UploadPage() {
                 <div className="mt-6 space-y-2">
                   <p className="text-sm font-medium text-muted-foreground">
                     {fileStates.length}{" "}
-                    {fileStates.length === 1 ? "fil vald" : "filer valda"}
+                    {fileStates.length === 1 ? t.fileSelectedSingular : t.fileSelectedPlural}
                   </p>
                   {fileStates.map((fs, i) => (
                     <div
@@ -228,8 +293,8 @@ export function UploadPage() {
 
                   <Button onClick={startUpload} className="mt-4 w-full">
                     <Upload className="mr-2 size-4" />
-                    Ladda upp {fileStates.length}{" "}
-                    {fileStates.length === 1 ? "fil" : "filer"}
+                    {t.uploadAction} {fileStates.length}{" "}
+                    {fileStates.length === 1 ? t.uploadBtnSingular : t.uploadBtnPlural}
                   </Button>
                 </div>
               )}
@@ -242,7 +307,7 @@ export function UploadPage() {
             <CardContent className="p-8">
               <div className="mb-6">
                 <p className="mb-2 text-sm font-medium">
-                  Bearbetar {completedCount} av {totalCount} dokument...
+                  {t.processingProgress} {completedCount} {t.processingOf} {totalCount} {t.processingDocs}
                 </p>
                 <Progress value={progressPercent} />
               </div>
@@ -276,7 +341,7 @@ export function UploadPage() {
             <Card>
               <CardContent className="p-6">
                 <h2 className="mb-4 text-lg font-semibold">
-                  Bearbetning klar
+                  {t.processingDone}
                 </h2>
                 <div className="space-y-3">
                   {fileStates.map((fs, i) => (
@@ -308,7 +373,7 @@ export function UploadPage() {
                           size="sm"
                           onClick={() => navigate(`/documents/${fs.docId}`)}
                         >
-                          Visa
+                          {t.view}
                           <ArrowRight className="ml-1 size-3" />
                         </Button>
                       )}
@@ -320,10 +385,10 @@ export function UploadPage() {
 
             <div className="flex gap-3">
               <Button onClick={() => navigate("/documents")}>
-                Visa alla dokument
+                {t.showAll}
               </Button>
               <Button variant="outline" onClick={reset}>
-                Ladda upp fler
+                {t.uploadMore}
               </Button>
             </div>
           </div>

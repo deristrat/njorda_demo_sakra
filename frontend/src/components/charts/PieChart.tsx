@@ -1,8 +1,20 @@
 import { EChartWrapper } from "./EChartWrapper";
 import { portfolioAllocation } from "@/data/charts";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { EChartsOption } from "echarts";
 
+const translations = {
+  sv: {
+    assetClass: "Tillgångsslag",
+  },
+  en: {
+    assetClass: "Asset class",
+  },
+} satisfies Record<Lang, Record<string, string>>;
+
 export function PieChart() {
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const option: EChartsOption = {
     tooltip: {
       trigger: "item",
@@ -16,7 +28,7 @@ export function PieChart() {
     },
     series: [
       {
-        name: "Tillgångsslag",
+        name: t.assetClass,
         type: "pie",
         radius: ["45%", "75%"],
         center: ["35%", "50%"],

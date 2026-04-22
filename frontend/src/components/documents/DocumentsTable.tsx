@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import {
   useReactTable,
@@ -22,9 +22,35 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchDocuments, deleteDocuments, bulkRecheckCompliance } from "@/lib/api";
-import { documentColumns } from "./documentColumns";
+import { getDocumentColumns, documentColumnTranslations } from "./documentColumns";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { DocumentSummary } from "@/types";
 import { toast } from "sonner";
+
+const translations = {
+  sv: {
+    somethingWrong: "Något gick fel",
+    searchPlaceholder: "Sök dokument...",
+    selected: "markerade",
+    checkRules: "Kontrollera regler",
+    delete: "Ta bort",
+    noDocuments: "Inga dokument hittades.",
+    showing: "Visar",
+    of: "av",
+    documents: "dokument",
+  },
+  en: {
+    somethingWrong: "Something went wrong",
+    searchPlaceholder: "Search documents...",
+    selected: "selected",
+    checkRules: "Check rules",
+    delete: "Delete",
+    noDocuments: "No documents found.",
+    showing: "Showing",
+    of: "of",
+    documents: "documents",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
 interface DocumentsTableProps {
   externalData?: DocumentSummary[];
@@ -39,6 +65,12 @@ export function DocumentsTable({
 }: DocumentsTableProps = {}) {
   const isExternal = externalData !== undefined;
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const t = translations[lang];
+  const columns = useMemo(
+    () => getDocumentColumns(documentColumnTranslations[lang]),
+    [lang],
+  );
   const [data, setData] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -54,13 +86,13 @@ export function DocumentsTable({
     }
     fetchDocuments()
       .then(setData)
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
+      .catch((e) => toast.error(e instanceof Error ? e.message : t.somethingWrong))
       .finally(() => setLoading(false));
-  }, [isExternal, externalData, externalLoading]);
+  }, [isExternal, externalData, externalLoading, t.somethingWrong]);
 
   const table = useReactTable({
     data,
-    columns: documentColumns,
+    columns,
     state: { sorting, globalFilter, rowSelection },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
@@ -126,7 +158,7 @@ export function DocumentsTable({
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Sök dokument..."
+            placeholder={t.searchPlaceholder}
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="bg-card pl-9"
@@ -136,7 +168,7 @@ export function DocumentsTable({
         {selectedIds.length > 0 && (
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-sm text-muted-foreground">
-              {selectedIds.length} markerade
+              {selectedIds.length} {t.selected}
             </span>
             <Button
               variant="outline"
@@ -149,7 +181,7 @@ export function DocumentsTable({
               ) : (
                 <RefreshCw className="mr-1 size-4" />
               )}
-              Kontrollera regler
+              {t.checkRules}
             </Button>
             <Button
               variant="destructive"
@@ -162,7 +194,7 @@ export function DocumentsTable({
               ) : (
                 <Trash2 className="mr-1 size-4" />
               )}
-              Ta bort
+              {t.delete}
             </Button>
           </div>
         )}
@@ -208,10 +240,10 @@ export function DocumentsTable({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={documentColumns.length}
+                  colSpan={columns.length}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  Inga dokument hittades.
+                  {t.noDocuments}
                 </TableCell>
               </TableRow>
             )}
@@ -220,7 +252,7 @@ export function DocumentsTable({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Visar {table.getRowModel().rows.length} av {data.length} dokument
+        {t.showing} {table.getRowModel().rows.length} {t.of} {data.length} {t.documents}
       </p>
     </div>
   );

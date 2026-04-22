@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ChatProvider } from "@/lib/chat-context";
+import { LanguageProvider } from "@/lib/language";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DocsLayout } from "@/components/docs/DocsLayout";
 import { LoginPage } from "@/pages/LoginPage";
@@ -60,6 +61,7 @@ function StartPage() {
 export default function App() {
   return (
     <BrowserRouter>
+      <LanguageProvider>
       <AuthProvider>
         <ChatProvider>
         <TooltipProvider>
@@ -116,6 +118,7 @@ export default function App() {
         </TooltipProvider>
         </ChatProvider>
       </AuthProvider>
+      </LanguageProvider>
     </BrowserRouter>
   );
 }

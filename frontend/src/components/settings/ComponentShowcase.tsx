@@ -24,18 +24,109 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { FontPicker } from "./FontPicker";
+import { useLanguage, type Lang } from "@/lib/language";
+
+const translations = {
+  sv: {
+    typographyTitle: "Typografi",
+    typographyDesc: "Välj typsnitt för applikationen",
+    accountTitle: "Kontouppgifter",
+    accountDesc: "Uppdatera dina personliga uppgifter",
+    firstName: "Förnamn",
+    lastName: "Efternamn",
+    email: "E-post",
+    password: "Lösenord",
+    preferencesTitle: "Preferenser",
+    preferencesDesc: "Anpassa dina inställningar",
+    language: "Språk",
+    timezone: "Tidszon",
+    darkMode: "Mörkt läge",
+    darkModeDesc: "Aktivera mörkt färgschema",
+    compactView: "Kompakt vy",
+    compactViewDesc: "Minska mellanrum och storlekar",
+    notificationsTitle: "Notifikationer",
+    notificationsDesc: "Välj vilka aviseringar du vill ta emot",
+    emailNotifications: "E-postnotifikationer",
+    newClientRequests: "Nya klientförfrågningar",
+    portfolioAlerts: "Portföljvarningar",
+    weeklySummary: "Veckosammanfattning",
+    systemUpdates: "Systemuppdateringar",
+    summaryFrequency: "Frekvens för sammanfattningar",
+    daily: "Dagligen",
+    weekly: "Veckovis",
+    monthly: "Månadsvis",
+    dataPrivacyTitle: "Data & Integritet",
+    dataPrivacyDesc: "Hantera dina datapreferenser",
+    notes: "Anteckningar",
+    notesPlaceholder: "Skriv dina anteckningar här...",
+    dataRetention: "Datalagring (månader)",
+    historySaved: "Historik sparas i 12 månader",
+    uploadFile: "Ladda upp fil",
+    dropHere: "Dra och släpp filer här, eller klicka för att välja",
+    saveChanges: "Spara ändringar",
+    cancel: "Avbryt",
+  },
+  en: {
+    typographyTitle: "Typography",
+    typographyDesc: "Choose the font for the application",
+    accountTitle: "Account details",
+    accountDesc: "Update your personal details",
+    firstName: "First name",
+    lastName: "Last name",
+    email: "Email",
+    password: "Password",
+    preferencesTitle: "Preferences",
+    preferencesDesc: "Customize your settings",
+    language: "Language",
+    timezone: "Time zone",
+    darkMode: "Dark mode",
+    darkModeDesc: "Enable dark color scheme",
+    compactView: "Compact view",
+    compactViewDesc: "Reduce spacing and sizes",
+    notificationsTitle: "Notifications",
+    notificationsDesc: "Choose which alerts you want to receive",
+    emailNotifications: "Email notifications",
+    newClientRequests: "New client requests",
+    portfolioAlerts: "Portfolio alerts",
+    weeklySummary: "Weekly summary",
+    systemUpdates: "System updates",
+    summaryFrequency: "Summary frequency",
+    daily: "Daily",
+    weekly: "Weekly",
+    monthly: "Monthly",
+    dataPrivacyTitle: "Data & Privacy",
+    dataPrivacyDesc: "Manage your data preferences",
+    notes: "Notes",
+    notesPlaceholder: "Type your notes here…",
+    dataRetention: "Data retention (months)",
+    historySaved: "History is saved for 12 months",
+    uploadFile: "Upload file",
+    dropHere: "Drag and drop files here, or click to select",
+    saveChanges: "Save changes",
+    cancel: "Cancel",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
 export function ComponentShowcase() {
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const [showPassword, setShowPassword] = useState(false);
+
+  const emailNotificationItems = [
+    { key: "newClientRequests", label: t.newClientRequests },
+    { key: "portfolioAlerts", label: t.portfolioAlerts },
+    { key: "weeklySummary", label: t.weeklySummary },
+    { key: "systemUpdates", label: t.systemUpdates },
+  ];
 
   return (
     <div className="space-y-6">
       {/* Typography / Font Picker */}
       <Card>
         <CardHeader>
-          <CardTitle>Typografi</CardTitle>
+          <CardTitle>{t.typographyTitle}</CardTitle>
           <CardDescription>
-            Välj typsnitt för applikationen
+            {t.typographyDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -46,24 +137,24 @@ export function ComponentShowcase() {
       {/* Account details */}
       <Card>
         <CardHeader>
-          <CardTitle>Kontouppgifter</CardTitle>
+          <CardTitle>{t.accountTitle}</CardTitle>
           <CardDescription>
-            Uppdatera dina personliga uppgifter
+            {t.accountDesc}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="firstName">Förnamn</Label>
+              <Label htmlFor="firstName">{t.firstName}</Label>
               <Input id="firstName" defaultValue="Daniel" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Efternamn</Label>
+              <Label htmlFor="lastName">{t.lastName}</Label>
               <Input id="lastName" defaultValue="Advisor" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="settingsEmail">E-post</Label>
+            <Label htmlFor="settingsEmail">{t.email}</Label>
             <Input
               id="settingsEmail"
               type="email"
@@ -71,7 +162,7 @@ export function ComponentShowcase() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="settingsPassword">Lösenord</Label>
+            <Label htmlFor="settingsPassword">{t.password}</Label>
             <div className="relative">
               <Input
                 id="settingsPassword"
@@ -99,12 +190,12 @@ export function ComponentShowcase() {
       {/* Preferences */}
       <Card>
         <CardHeader>
-          <CardTitle>Preferenser</CardTitle>
-          <CardDescription>Anpassa dina inställningar</CardDescription>
+          <CardTitle>{t.preferencesTitle}</CardTitle>
+          <CardDescription>{t.preferencesDesc}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Språk</Label>
+            <Label>{t.language}</Label>
             <Select defaultValue="sv">
               <SelectTrigger>
                 <SelectValue />
@@ -119,7 +210,7 @@ export function ComponentShowcase() {
           </div>
 
           <div className="space-y-2">
-            <Label>Tidszon</Label>
+            <Label>{t.timezone}</Label>
             <Select defaultValue="europe-stockholm">
               <SelectTrigger>
                 <SelectValue />
@@ -142,9 +233,9 @@ export function ComponentShowcase() {
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>Mörkt läge</Label>
+              <Label>{t.darkMode}</Label>
               <p className="text-xs text-muted-foreground">
-                Aktivera mörkt färgschema
+                {t.darkModeDesc}
               </p>
             </div>
             <Switch />
@@ -152,9 +243,9 @@ export function ComponentShowcase() {
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>Kompakt vy</Label>
+              <Label>{t.compactView}</Label>
               <p className="text-xs text-muted-foreground">
-                Minska mellanrum och storlekar
+                {t.compactViewDesc}
               </p>
             </div>
             <Switch />
@@ -165,27 +256,22 @@ export function ComponentShowcase() {
       {/* Notifications */}
       <Card>
         <CardHeader>
-          <CardTitle>Notifikationer</CardTitle>
+          <CardTitle>{t.notificationsTitle}</CardTitle>
           <CardDescription>
-            Välj vilka aviseringar du vill ta emot
+            {t.notificationsDesc}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
-            <Label className="text-sm font-medium">E-postnotifikationer</Label>
-            {[
-              "Nya klientförfrågningar",
-              "Portföljvarningar",
-              "Veckosammanfattning",
-              "Systemuppdateringar",
-            ].map((item) => (
-              <div key={item} className="flex items-center gap-2">
+            <Label className="text-sm font-medium">{t.emailNotifications}</Label>
+            {emailNotificationItems.map((item) => (
+              <div key={item.key} className="flex items-center gap-2">
                 <Checkbox
-                  id={item}
-                  defaultChecked={item !== "Systemuppdateringar"}
+                  id={item.key}
+                  defaultChecked={item.key !== "systemUpdates"}
                 />
-                <Label htmlFor={item} className="text-sm font-normal">
-                  {item}
+                <Label htmlFor={item.key} className="text-sm font-normal">
+                  {item.label}
                 </Label>
               </div>
             ))}
@@ -195,25 +281,25 @@ export function ComponentShowcase() {
 
           <div className="space-y-3">
             <Label className="text-sm font-medium">
-              Frekvens för sammanfattningar
+              {t.summaryFrequency}
             </Label>
             <RadioGroup defaultValue="weekly">
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="daily" id="daily" />
                 <Label htmlFor="daily" className="font-normal">
-                  Dagligen
+                  {t.daily}
                 </Label>
               </div>
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="weekly" id="weekly" />
                 <Label htmlFor="weekly" className="font-normal">
-                  Veckovis
+                  {t.weekly}
                 </Label>
               </div>
               <div className="flex items-center gap-2">
                 <RadioGroupItem value="monthly" id="monthly" />
                 <Label htmlFor="monthly" className="font-normal">
-                  Månadsvis
+                  {t.monthly}
                 </Label>
               </div>
             </RadioGroup>
@@ -224,32 +310,32 @@ export function ComponentShowcase() {
       {/* Data & Privacy */}
       <Card>
         <CardHeader>
-          <CardTitle>Data & Integritet</CardTitle>
-          <CardDescription>Hantera dina datapreferenser</CardDescription>
+          <CardTitle>{t.dataPrivacyTitle}</CardTitle>
+          <CardDescription>{t.dataPrivacyDesc}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="notes">Anteckningar</Label>
+            <Label htmlFor="notes">{t.notes}</Label>
             <Textarea
               id="notes"
-              placeholder="Skriv dina anteckningar här..."
+              placeholder={t.notesPlaceholder}
               rows={4}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Datalagring (månader)</Label>
+            <Label>{t.dataRetention}</Label>
             <Slider defaultValue={[12]} max={36} min={1} step={1} />
             <p className="text-xs text-muted-foreground">
-              Historik sparas i 12 månader
+              {t.historySaved}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label>Ladda upp fil</Label>
+            <Label>{t.uploadFile}</Label>
             <div className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed border-border transition-colors hover:border-primary/50 hover:bg-secondary/30">
               <p className="text-sm text-muted-foreground">
-                Dra och släpp filer här, eller klicka för att välja
+                {t.dropHere}
               </p>
             </div>
           </div>
@@ -258,8 +344,8 @@ export function ComponentShowcase() {
 
       {/* Actions */}
       <div className="flex gap-3">
-        <Button>Spara ändringar</Button>
-        <Button variant="outline">Avbryt</Button>
+        <Button>{t.saveChanges}</Button>
+        <Button variant="outline">{t.cancel}</Button>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -18,11 +18,62 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { clients } from "@/data/clients";
-import { columns } from "./columns";
+import { getColumns } from "./columns";
+import { useLanguage, type Lang } from "@/lib/language";
+
+const translations = {
+  sv: {
+    searchPlaceholder: "Sök klient...",
+    emptyState: "Inga klienter hittades.",
+    showing: "Visar",
+    of: "av",
+    clients: "klienter",
+    clientName: "Klientnamn",
+    lastContact: "Senaste kontakt",
+    aum: "AUM",
+    status: "Status",
+    attention: "Uppmärksamhet",
+    statusActive: "Aktiv",
+    statusInactive: "Inaktiv",
+    statusNew: "Ny",
+  },
+  en: {
+    searchPlaceholder: "Search client...",
+    emptyState: "No clients found.",
+    showing: "Showing",
+    of: "of",
+    clients: "clients",
+    clientName: "Client name",
+    lastContact: "Last contact",
+    aum: "AUM",
+    status: "Status",
+    attention: "Attention",
+    statusActive: "Active",
+    statusInactive: "Inactive",
+    statusNew: "New",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
 export function ClientsTable() {
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+
+  const columns = useMemo(
+    () =>
+      getColumns({
+        clientName: t.clientName,
+        lastContact: t.lastContact,
+        aum: t.aum,
+        status: t.status,
+        attention: t.attention,
+        statusActive: t.statusActive,
+        statusInactive: t.statusInactive,
+        statusNew: t.statusNew,
+      }),
+    [t],
+  );
 
   const table = useReactTable({
     data: clients,
@@ -40,7 +91,7 @@ export function ClientsTable() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Sök klient..."
+          placeholder={t.searchPlaceholder}
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
           className="bg-card pl-9"
@@ -88,7 +139,7 @@ export function ClientsTable() {
                   colSpan={columns.length}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  Inga klienter hittades.
+                  {t.emptyState}
                 </TableCell>
               </TableRow>
             )}
@@ -97,7 +148,7 @@ export function ClientsTable() {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Visar {table.getRowModel().rows.length} av {clients.length} klienter
+        {t.showing} {table.getRowModel().rows.length} {t.of} {clients.length} {t.clients}
       </p>
     </div>
   );

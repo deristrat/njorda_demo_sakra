@@ -4,10 +4,32 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { DocumentsTable } from "@/components/documents/DocumentsTable";
 import { Card, CardContent } from "@/components/ui/card";
 import { fetchDocuments } from "@/lib/api";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { DocumentSummary } from "@/types";
 import { toast } from "sonner";
 
+const translations = {
+  sv: {
+    pageTitle: "Inkorg — Säkra",
+    headerTitle: "Inkorg",
+    emptyTitle: "Inga ärenden",
+    emptyBody:
+      "Alla dokument är godkända. Det finns inga avvikelser att hantera just nu.",
+    somethingWentWrong: "Något gick fel",
+  },
+  en: {
+    pageTitle: "Inbox — Säkra",
+    headerTitle: "Inbox",
+    emptyTitle: "No cases",
+    emptyBody:
+      "All documents are approved. There are no issues to handle right now.",
+    somethingWentWrong: "Something went wrong",
+  },
+} satisfies Record<Lang, Record<string, string>>;
+
 export function InboxPage() {
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const [docs, setDocs] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,19 +45,20 @@ export function InboxPage() {
         ),
       )
       .catch((e) =>
-        toast.error(e instanceof Error ? e.message : "Något gick fel"),
+        toast.error(e instanceof Error ? e.message : t.somethingWentWrong),
       )
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    document.title = "Inkorg — Säkra";
+    document.title = t.pageTitle;
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t.pageTitle]);
 
   return (
     <>
-      <AppHeader title="Inkorg" />
+      <AppHeader title={t.headerTitle} />
       <div className="p-6">
         {!loading && docs.length === 0 ? (
           <Card>
@@ -44,10 +67,9 @@ export function InboxPage() {
                 <Inbox className="size-7 text-emerald-600" />
               </div>
               <div className="text-center">
-                <h2 className="font-brand text-lg">Inga ärenden</h2>
+                <h2 className="font-brand text-lg">{t.emptyTitle}</h2>
                 <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                  Alla dokument är godkända. Det finns inga avvikelser att
-                  hantera just nu.
+                  {t.emptyBody}
                 </p>
               </div>
             </CardContent>

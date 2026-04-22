@@ -7,10 +7,65 @@ import { AdvisorChat } from "@/components/chat/AdvisorChat";
 import { fetchDocuments, fetchClients, uploadDocuments, processDocumentsSSE } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useChat } from "@/lib/chat-context";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { DocumentSummary, Client } from "@/types";
+
+
+const translations = {
+  sv: {
+    pageTitle: "Start — Säkra",
+    headerTitle: "Start",
+    welcomeBack: "Välkommen tillbaka",
+    subtitle: "Redo för nästa rådgivningsmöte?",
+    statToHandle: "Att hantera",
+    statWithIssues: "Dokument med avvikelser",
+    statNoOpenCases: "Inga öppna ärenden",
+    statDocs: "Dokument",
+    statDocsApproved: "Dokument – godkända",
+    percentApproved: "godkända",
+    statClients: "Klienter",
+    uploadTitle: "Ladda upp dokument",
+    uploadSub: "Dra och släpp, eller klicka för att bläddra",
+    uploading: "Laddar upp...",
+    analyzing: "Analyserar dokument...",
+    uploadedOne: "Dokument uppladdat och analyserat",
+    uploadedManySuffix: "dokument uppladdade",
+    view: "Visa →",
+    uploadFailed: "Uppladdning misslyckades",
+    tryAgain: "Försök igen",
+    aiAssistant: "AI Assistent",
+    toggleLabel: "English",
+  },
+  en: {
+    pageTitle: "Home — Säkra",
+    headerTitle: "Home",
+    welcomeBack: "Welcome back",
+    subtitle: "Ready for your next advisory meeting?",
+    statToHandle: "To handle",
+    statWithIssues: "Documents with issues",
+    statNoOpenCases: "No open cases",
+    statDocs: "Documents",
+    statDocsApproved: "Documents – approved",
+    percentApproved: "approved",
+    statClients: "Clients",
+    uploadTitle: "Upload document",
+    uploadSub: "Drag and drop, or click to browse",
+    uploading: "Uploading…",
+    analyzing: "Analyzing document…",
+    uploadedOne: "Document uploaded and analyzed",
+    uploadedManySuffix: "documents uploaded",
+    view: "View →",
+    uploadFailed: "Upload failed",
+    tryAgain: "Try again",
+    aiAssistant: "AI Assistant",
+    toggleLabel: "Svenska",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
 export function AdvisorStartPage() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const { name, isImpersonating, impersonatingAs } = useAuth();
   const displayName = isImpersonating && impersonatingAs
     ? impersonatingAs.name
@@ -68,7 +123,10 @@ export function AdvisorStartPage() {
   );
 
   useEffect(() => {
-    document.title = "Start — Säkra";
+    document.title = t.pageTitle;
+  }, [t.pageTitle]);
+
+  useEffect(() => {
     Promise.all([fetchDocuments(), fetchClients()])
       .then(([d, c]) => {
         setDocs(d);
@@ -89,30 +147,30 @@ export function AdvisorStartPage() {
 
   const statCards = [
     {
-      label: "Att hantera",
+      label: t.statToHandle,
       value: docsWithIssues,
-      sub: docsWithIssues > 0 ? "Dokument med avvikelser" : "Inga öppna ärenden",
+      sub: docsWithIssues > 0 ? t.statWithIssues : t.statNoOpenCases,
       icon: Inbox,
       color: docsWithIssues > 0 ? "text-amber-600 bg-amber-50" : "text-emerald-600 bg-emerald-50",
       path: "/inbox",
     },
     {
-      label: "Dokument",
+      label: t.statDocs,
       value: totalDocs,
       icon: FileText,
       color: "text-blue-600 bg-blue-50",
       path: "/archive",
     },
     {
-      label: "Dokument – godkända",
+      label: t.statDocsApproved,
       value: greenDocs,
-      sub: reviewedDocs > 0 ? `${complianceRate}% godkända` : undefined,
+      sub: reviewedDocs > 0 ? `${complianceRate}% ${t.percentApproved}` : undefined,
       icon: CheckCircle2,
       color: "text-emerald-600 bg-emerald-50",
       path: "/archive",
     },
     {
-      label: "Klienter",
+      label: t.statClients,
       value: clients.length,
       icon: Users,
       color: "text-teal-600 bg-teal-50",
@@ -124,7 +182,7 @@ export function AdvisorStartPage() {
   if (chatActive) {
     return (
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <AppHeader title="Start" />
+        <AppHeader title={t.headerTitle} />
         <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
           <div className="grid flex-none gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {statCards.map((card) => (
@@ -160,14 +218,14 @@ export function AdvisorStartPage() {
 
   return (
     <>
-      <AppHeader title="Start" />
+      <AppHeader title={t.headerTitle} />
       <div className="space-y-6 p-6">
         <div className="py-4">
           <h1 className="font-brand text-2xl tracking-tight">
-            Välkommen tillbaka{displayName ? `, ${displayName.split(" ")[0]}` : ""}
+            {t.welcomeBack}{displayName ? `, ${displayName.split(" ")[0]}` : ""}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Redo för nästa rådgivningsmöte?
+            {t.subtitle}
           </p>
         </div>
 
@@ -216,9 +274,9 @@ export function AdvisorStartPage() {
               <Upload className="size-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium">Ladda upp dokument</p>
+              <p className="text-sm font-medium">{t.uploadTitle}</p>
               <p className="text-xs text-muted-foreground">
-                Dra och släpp, eller klicka för att bläddra
+                {t.uploadSub}
               </p>
             </div>
             <input
@@ -239,8 +297,8 @@ export function AdvisorStartPage() {
             <div>
               <p className="text-sm font-medium">
                 {uploadStatus === "uploading"
-                  ? "Laddar upp..."
-                  : "Analyserar dokument..."}
+                  ? t.uploading
+                  : t.analyzing}
               </p>
               <p className="truncate text-xs text-muted-foreground">
                 {uploadedFileNames.join(", ")}
@@ -260,33 +318,33 @@ export function AdvisorStartPage() {
             <div className="flex-1">
               <p className="text-sm font-medium text-emerald-900">
                 {uploadedFileNames.length === 1
-                  ? "Dokument uppladdat och analyserat"
-                  : `${uploadedFileNames.length} dokument uppladdade`}
+                  ? t.uploadedOne
+                  : `${uploadedFileNames.length} ${t.uploadedManySuffix}`}
               </p>
             </div>
             <span className="text-sm font-medium text-emerald-700">
-              Visa →
+              {t.view}
             </span>
           </div>
         ) : uploadStatus === "error" ? (
           <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-4">
             <div className="flex-1">
               <p className="text-sm font-medium text-red-900">
-                Uppladdning misslyckades
+                {t.uploadFailed}
               </p>
             </div>
             <button
               className="text-sm font-medium text-red-700 hover:text-red-900"
               onClick={() => setUploadStatus("idle")}
             >
-              Försök igen
+              {t.tryAgain}
             </button>
           </div>
         ) : null}
 
         <div>
           <h2 className="mb-3 font-brand text-sm font-medium text-muted-foreground">
-            AI Assistent
+            {t.aiAssistant}
           </h2>
           <AdvisorChat />
         </div>

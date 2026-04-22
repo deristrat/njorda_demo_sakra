@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import {
   useReactTable,
@@ -20,12 +20,52 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchClients } from "@/lib/api";
-import { clientListColumns } from "./clientListColumns";
+import { getClientListColumns } from "./clientListColumns";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { Client } from "@/types";
 import { toast } from "sonner";
 
+const translations = {
+  sv: {
+    somethingWentWrong: "Något gick fel",
+    searchPlaceholder: "Sök klienter...",
+    emptyState:
+      "Inga klienter hittats. Ladda upp dokument med personnummer för att skapa klienter automatiskt.",
+    showing: "Visar",
+    of: "av",
+    clients: "klienter",
+    clientName: "Klientnamn",
+    personNumber: "Personnummer",
+    documents: "Dokument",
+    issues: "Avvikelser",
+    warnings: "Varningar",
+    email: "E-post",
+    latestDocument: "Senaste dokument",
+    unknown: "Okänd",
+  },
+  en: {
+    somethingWentWrong: "Something went wrong",
+    searchPlaceholder: "Search clients...",
+    emptyState:
+      "No clients found. Upload documents with personal numbers to create clients automatically.",
+    showing: "Showing",
+    of: "of",
+    clients: "clients",
+    clientName: "Client name",
+    personNumber: "Personal number",
+    documents: "Documents",
+    issues: "Issues",
+    warnings: "Warnings",
+    email: "Email",
+    latestDocument: "Latest document",
+    unknown: "Unknown",
+  },
+} satisfies Record<Lang, Record<string, string>>;
+
 export function ClientsListTable() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const [data, setData] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -34,13 +74,28 @@ export function ClientsListTable() {
   useEffect(() => {
     fetchClients()
       .then(setData)
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
+      .catch((e) => toast.error(e instanceof Error ? e.message : t.somethingWentWrong))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t.somethingWentWrong]);
+
+  const columns = useMemo(
+    () =>
+      getClientListColumns({
+        clientName: t.clientName,
+        personNumber: t.personNumber,
+        documents: t.documents,
+        issues: t.issues,
+        warnings: t.warnings,
+        email: t.email,
+        latestDocument: t.latestDocument,
+        unknown: t.unknown,
+      }),
+    [t],
+  );
 
   const table = useReactTable({
     data,
-    columns: clientListColumns,
+    columns,
     state: { sorting, globalFilter },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
@@ -64,7 +119,7 @@ export function ClientsListTable() {
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Sök klienter..."
+            placeholder={t.searchPlaceholder}
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="bg-card pl-9"
@@ -111,11 +166,10 @@ export function ClientsListTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={clientListColumns.length}
+                  colSpan={columns.length}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  Inga klienter hittats. Ladda upp dokument med personnummer
-                  för att skapa klienter automatiskt.
+                  {t.emptyState}
                 </TableCell>
               </TableRow>
             )}
@@ -124,7 +178,7 @@ export function ClientsListTable() {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Visar {table.getRowModel().rows.length} av {data.length} klienter
+        {t.showing} {table.getRowModel().rows.length} {t.of} {data.length} {t.clients}
       </p>
     </div>
   );

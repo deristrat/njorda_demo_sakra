@@ -29,34 +29,193 @@ import {
   fetchRuleHistory,
   type AuditEntry,
 } from "@/lib/api";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { ComplianceRuleConfig } from "@/types";
 import { toast } from "sonner";
 import {
-  CATEGORY_LABELS,
-  DOC_TYPE_OPTIONS,
-  RULE_TYPE_LABELS,
+  CATEGORY_LABELS_BY_LANG,
+  RULE_TYPE_LABELS_BY_LANG,
+  getDocTypeOptions,
   RuleParamsEditor,
 } from "@/components/compliance/RuleParamsEditor";
 
 // No parent sentinel for the Select component
 const NO_PARENT = "__none__";
 
-// Swedish field labels for diff display
-const FIELD_LABELS: Record<string, string> = {
-  name: "Namn",
-  description: "Beskrivning",
-  enabled: "Aktiv",
-  severity_override: "Allvarlighetsgrad",
-  max_deduction: "Maxpoäng",
-  remediation: "Åtgärdsförslag",
-  rule_params: "Regelparametrar",
-  document_types: "Dokumenttyper",
-  parent_rule_id: "Överordnad regel",
-};
+const translations = {
+  sv: {
+    pageHeader: "Regel",
+    somethingWentWrong: "Något gick fel",
+    back: "Tillbaka",
+    notFound: "Regeln hittades inte.",
+    ruleSaved: "Regeln har sparats",
+    couldNotSave: "Kunde inte spara regeln",
+    active: "Aktiv",
+    inactive: "Inaktiv",
+    saving: "Sparar...",
+    save: "Spara",
+    saveChanges: "Spara ändringar",
+    cardInfoTitle: "Regelinformation",
+    labelRuleId: "Regel-ID",
+    labelRuleType: "Regeltyp",
+    labelTier: "Nivå",
+    labelDefaultSeverity: "Standardallvarlighet",
+    tierStandard: "Standard",
+    tierAI: "AI (Tier 2)",
+    severityError: "Fel",
+    severityWarning: "Varning",
+    cardConfigTitle: "Regelkonfiguration",
+    description: "Beskrivning",
+    descriptionPlaceholder: "Beskriv vad regeln kontrollerar...",
+    documentTypes: "Dokumenttyper",
+    documentTypesHelp: "Välj vilka dokumenttyper regeln ska tillämpas på",
+    atLeastOneDocType: "Minst en dokumenttyp måste vara vald",
+    parentRule: "Överordnad regel",
+    selectPlaceholder: "Välj...",
+    noneStandalone: "Ingen (fristående)",
+    cardSettingsTitle: "Inställningar",
+    name: "Namn",
+    activeHelp: "Inaktiva regler körs inte vid granskning",
+    severityLabel: "Allvarlighetsgrad",
+    severityDefault: "Standard",
+    maxDeduction: "Maxpoäng (avdrag)",
+    remediation: "Åtgärdsförslag",
+    remediationPlaceholder: "Beskriv hur regeln kan åtgärdas vid avvikelse...",
+    historyTitle: "Historik",
+    noHistory: "Inga ändringar registrerade.",
+    actionCreated: "Skapad",
+    actionUpdated: "Uppdaterad",
+    noVisibleChanges: "Inga synliga ändringar.",
+    empty: "(tom)",
+    yes: "Ja",
+    no: "Nej",
+    fieldLabels: {
+      name: "Namn",
+      description: "Beskrivning",
+      enabled: "Aktiv",
+      severity_override: "Allvarlighetsgrad",
+      max_deduction: "Maxpoäng",
+      remediation: "Åtgärdsförslag",
+      rule_params: "Regelparametrar",
+      document_types: "Dokumenttyper",
+      parent_rule_id: "Överordnad regel",
+    } as Record<string, string>,
+    locale: "sv-SE",
+  },
+  en: {
+    pageHeader: "Rule",
+    somethingWentWrong: "Something went wrong",
+    back: "Back",
+    notFound: "Rule not found.",
+    ruleSaved: "Rule saved",
+    couldNotSave: "Could not save rule",
+    active: "Active",
+    inactive: "Inactive",
+    saving: "Saving…",
+    save: "Save",
+    saveChanges: "Save changes",
+    cardInfoTitle: "Rule information",
+    labelRuleId: "Rule ID",
+    labelRuleType: "Rule type",
+    labelTier: "Tier",
+    labelDefaultSeverity: "Default severity",
+    tierStandard: "Standard",
+    tierAI: "AI (Tier 2)",
+    severityError: "Error",
+    severityWarning: "Warning",
+    cardConfigTitle: "Rule configuration",
+    description: "Description",
+    descriptionPlaceholder: "Describe what the rule checks…",
+    documentTypes: "Document types",
+    documentTypesHelp: "Choose which document types the rule applies to",
+    atLeastOneDocType: "At least one document type must be selected",
+    parentRule: "Parent rule",
+    selectPlaceholder: "Select…",
+    noneStandalone: "None (standalone)",
+    cardSettingsTitle: "Settings",
+    name: "Name",
+    activeHelp: "Inactive rules are not run during review",
+    severityLabel: "Severity",
+    severityDefault: "Default",
+    maxDeduction: "Max deduction",
+    remediation: "Remediation",
+    remediationPlaceholder: "Describe how the rule can be remediated when violated…",
+    historyTitle: "History",
+    noHistory: "No changes recorded.",
+    actionCreated: "Created",
+    actionUpdated: "Updated",
+    noVisibleChanges: "No visible changes.",
+    empty: "(empty)",
+    yes: "Yes",
+    no: "No",
+    fieldLabels: {
+      name: "Name",
+      description: "Description",
+      enabled: "Active",
+      severity_override: "Severity",
+      max_deduction: "Max deduction",
+      remediation: "Remediation",
+      rule_params: "Rule parameters",
+      document_types: "Document types",
+      parent_rule_id: "Parent rule",
+    } as Record<string, string>,
+    locale: "en-GB",
+  },
+} satisfies Record<Lang, {
+  pageHeader: string;
+  somethingWentWrong: string;
+  back: string;
+  notFound: string;
+  ruleSaved: string;
+  couldNotSave: string;
+  active: string;
+  inactive: string;
+  saving: string;
+  save: string;
+  saveChanges: string;
+  cardInfoTitle: string;
+  labelRuleId: string;
+  labelRuleType: string;
+  labelTier: string;
+  labelDefaultSeverity: string;
+  tierStandard: string;
+  tierAI: string;
+  severityError: string;
+  severityWarning: string;
+  cardConfigTitle: string;
+  description: string;
+  descriptionPlaceholder: string;
+  documentTypes: string;
+  documentTypesHelp: string;
+  atLeastOneDocType: string;
+  parentRule: string;
+  selectPlaceholder: string;
+  noneStandalone: string;
+  cardSettingsTitle: string;
+  name: string;
+  activeHelp: string;
+  severityLabel: string;
+  severityDefault: string;
+  maxDeduction: string;
+  remediation: string;
+  remediationPlaceholder: string;
+  historyTitle: string;
+  noHistory: string;
+  actionCreated: string;
+  actionUpdated: string;
+  noVisibleChanges: string;
+  empty: string;
+  yes: string;
+  no: string;
+  fieldLabels: Record<string, string>;
+  locale: string;
+}>;
 
-function formatValue(v: unknown): string {
-  if (v === null || v === undefined) return "(tom)";
-  if (typeof v === "boolean") return v ? "Ja" : "Nej";
+type T = typeof translations["sv"];
+
+function formatValue(v: unknown, t: T): string {
+  if (v === null || v === undefined) return t.empty;
+  if (typeof v === "boolean") return v ? t.yes : t.no;
   if (Array.isArray(v)) return v.join(", ");
   if (typeof v === "object") return JSON.stringify(v, null, 2);
   return String(v);
@@ -65,6 +224,11 @@ function formatValue(v: unknown): string {
 export function ComplianceRuleDetailPage() {
   const { ruleId } = useParams<{ ruleId: string }>();
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const t = translations[lang];
+  const CATEGORY_LABELS = CATEGORY_LABELS_BY_LANG[lang];
+  const RULE_TYPE_LABELS = RULE_TYPE_LABELS_BY_LANG[lang];
+  const DOC_TYPE_OPTIONS = getDocTypeOptions(lang);
   const [rule, setRule] = useState<ComplianceRuleConfig | null>(null);
   const [allRules, setAllRules] = useState<ComplianceRuleConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +249,7 @@ export function ComplianceRuleDetailPage() {
   const [ruleParams, setRuleParams] = useState<Record<string, unknown>>({});
 
   const loadHistory = (id: string) => {
-    fetchRuleHistory(id).then(setHistory).catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"));
+    fetchRuleHistory(id).then(setHistory).catch((e) => toast.error(e instanceof Error ? e.message : t.somethingWentWrong));
   };
 
   useEffect(() => {
@@ -113,9 +277,10 @@ export function ComplianceRuleDetailPage() {
           );
         }
       })
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
+      .catch((e) => toast.error(e instanceof Error ? e.message : t.somethingWentWrong))
       .finally(() => setLoading(false));
     loadHistory(ruleId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ruleId]);
 
   useEffect(() => {
@@ -201,11 +366,11 @@ export function ComplianceRuleDetailPage() {
           parentRuleId === NO_PARENT ? "" : parentRuleId,
       });
       setRule(updated);
-      toast.success("Regeln har sparats");
+      toast.success(t.ruleSaved);
       if (ruleId) loadHistory(ruleId);
     } catch (e) {
       const msg =
-        e instanceof Error ? e.message : "Kunde inte spara regeln";
+        e instanceof Error ? e.message : t.couldNotSave;
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -215,7 +380,7 @@ export function ComplianceRuleDetailPage() {
   if (loading) {
     return (
       <>
-        <AppHeader title="Regel" />
+        <AppHeader title={t.pageHeader} />
         <div className="p-6 space-y-4">
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-64 w-full max-w-3xl" />
@@ -227,7 +392,7 @@ export function ComplianceRuleDetailPage() {
   if (!rule) {
     return (
       <>
-        <AppHeader title="Regel" />
+        <AppHeader title={t.pageHeader} />
         <div className="p-6">
           <Button
             variant="ghost"
@@ -235,9 +400,9 @@ export function ComplianceRuleDetailPage() {
             onClick={() => navigate("/settings/compliance")}
           >
             <ArrowLeft className="mr-1 size-4" />
-            Tillbaka
+            {t.back}
           </Button>
-          <p className="text-muted-foreground mt-4">Regeln hittades inte.</p>
+          <p className="text-muted-foreground mt-4">{t.notFound}</p>
         </div>
       </>
     );
@@ -255,7 +420,7 @@ export function ComplianceRuleDetailPage() {
             onClick={() => navigate("/settings/compliance")}
           >
             <ArrowLeft className="mr-1 size-4" />
-            Tillbaka
+            {t.back}
           </Button>
           <Badge variant="outline">
             {CATEGORY_LABELS[rule.category] || rule.category}
@@ -267,7 +432,7 @@ export function ComplianceRuleDetailPage() {
             </Badge>
           )}
           <Badge variant={enabled ? "default" : "secondary"}>
-            {enabled ? "Aktiv" : "Inaktiv"}
+            {enabled ? t.active : t.inactive}
           </Badge>
           <Button
             size="sm"
@@ -276,41 +441,41 @@ export function ComplianceRuleDetailPage() {
             disabled={!canSave || saving}
           >
             <Save className="mr-1 size-4" />
-            {saving ? "Sparar..." : "Spara"}
+            {saving ? t.saving : t.save}
           </Button>
         </div>
 
         {/* Card 1 — Regelinformation (read-only) */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Regelinformation</CardTitle>
+            <CardTitle className="text-base">{t.cardInfoTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
               <div>
-                <dt className="text-xs text-muted-foreground">Regel-ID</dt>
+                <dt className="text-xs text-muted-foreground">{t.labelRuleId}</dt>
                 <dd className="text-sm font-medium font-brand">
                   {rule.rule_id}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Regeltyp</dt>
+                <dt className="text-xs text-muted-foreground">{t.labelRuleType}</dt>
                 <dd className="text-sm font-medium">
                   {RULE_TYPE_LABELS[rule.rule_type] || rule.rule_type}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Nivå</dt>
+                <dt className="text-xs text-muted-foreground">{t.labelTier}</dt>
                 <dd className="text-sm font-medium">
-                  {rule.tier === 1 ? "Standard" : "AI (Tier 2)"}
+                  {rule.tier === 1 ? t.tierStandard : t.tierAI}
                 </dd>
               </div>
               <div>
                 <dt className="text-xs text-muted-foreground">
-                  Standardallvarlighet
+                  {t.labelDefaultSeverity}
                 </dt>
                 <dd className="text-sm font-medium">
-                  {rule.default_severity === "error" ? "Fel" : "Varning"}
+                  {rule.default_severity === "error" ? t.severityError : t.severityWarning}
                 </dd>
               </div>
             </dl>
@@ -320,26 +485,26 @@ export function ComplianceRuleDetailPage() {
         {/* Card 2 — Regelkonfiguration (editable) */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Regelkonfiguration</CardTitle>
+            <CardTitle className="text-base">{t.cardConfigTitle}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             {/* Description */}
             <div className="space-y-1.5">
-              <Label htmlFor="rule-description">Beskrivning</Label>
+              <Label htmlFor="rule-description">{t.description}</Label>
               <Textarea
                 id="rule-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                placeholder="Beskriv vad regeln kontrollerar..."
+                placeholder={t.descriptionPlaceholder}
               />
             </div>
 
             {/* Document types */}
             <div className="space-y-2">
-              <Label>Dokumenttyper</Label>
+              <Label>{t.documentTypes}</Label>
               <p className="text-xs text-muted-foreground">
-                Välj vilka dokumenttyper regeln ska tillämpas på
+                {t.documentTypesHelp}
               </p>
               <div className="flex flex-wrap gap-x-5 gap-y-2">
                 {DOC_TYPE_OPTIONS.map(([value, label]) => {
@@ -360,8 +525,8 @@ export function ComplianceRuleDetailPage() {
                           } else {
                             setDocumentTypes((prev) =>
                               c
-                                ? [...prev.filter((t) => t !== "all"), value]
-                                : prev.filter((t) => t !== value),
+                                ? [...prev.filter((ty) => ty !== "all"), value]
+                                : prev.filter((ty) => ty !== value),
                             );
                           }
                         }}
@@ -373,21 +538,21 @@ export function ComplianceRuleDetailPage() {
               </div>
               {!docTypesValid && (
                 <p className="text-xs text-destructive">
-                  Minst en dokumenttyp måste vara vald
+                  {t.atLeastOneDocType}
                 </p>
               )}
             </div>
 
             {/* Parent rule */}
             <div className="space-y-1.5">
-              <Label>Överordnad regel</Label>
+              <Label>{t.parentRule}</Label>
               <Select value={parentRuleId} onValueChange={setParentRuleId}>
                 <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Välj..." />
+                  <SelectValue placeholder={t.selectPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NO_PARENT}>
-                    Ingen (fristående)
+                    {t.noneStandalone}
                   </SelectItem>
                   {parentOptions.map((r) => (
                     <SelectItem key={r.rule_id} value={r.rule_id}>
@@ -410,11 +575,11 @@ export function ComplianceRuleDetailPage() {
         {/* Card 3 — Inställningar (existing editable) */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Inställningar</CardTitle>
+            <CardTitle className="text-base">{t.cardSettingsTitle}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-1.5">
-              <Label htmlFor="rule-name">Namn</Label>
+              <Label htmlFor="rule-name">{t.name}</Label>
               <Input
                 id="rule-name"
                 value={name}
@@ -424,9 +589,9 @@ export function ComplianceRuleDetailPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <Label>Aktiv</Label>
+                <Label>{t.active}</Label>
                 <p className="text-xs text-muted-foreground">
-                  Inaktiva regler körs inte vid granskning
+                  {t.activeHelp}
                 </p>
               </div>
               <Switch checked={enabled} onCheckedChange={setEnabled} />
@@ -434,7 +599,7 @@ export function ComplianceRuleDetailPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Allvarlighetsgrad</Label>
+                <Label>{t.severityLabel}</Label>
                 <Select
                   value={severityOverride}
                   onValueChange={setSeverityOverride}
@@ -444,17 +609,17 @@ export function ComplianceRuleDetailPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="default">
-                      Standard (
-                      {rule.default_severity === "error" ? "Fel" : "Varning"})
+                      {t.severityDefault} (
+                      {rule.default_severity === "error" ? t.severityError : t.severityWarning})
                     </SelectItem>
-                    <SelectItem value="error">Fel</SelectItem>
-                    <SelectItem value="warning">Varning</SelectItem>
+                    <SelectItem value="error">{t.severityError}</SelectItem>
+                    <SelectItem value="warning">{t.severityWarning}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="max-deduction">Maxpoäng (avdrag)</Label>
+                <Label htmlFor="max-deduction">{t.maxDeduction}</Label>
                 <Input
                   id="max-deduction"
                   type="number"
@@ -471,13 +636,13 @@ export function ComplianceRuleDetailPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="remediation">Åtgärdsförslag</Label>
+              <Label htmlFor="remediation">{t.remediation}</Label>
               <Textarea
                 id="remediation"
                 value={remediation}
                 onChange={(e) => setRemediation(e.target.value)}
                 rows={3}
-                placeholder="Beskriv hur regeln kan åtgärdas vid avvikelse..."
+                placeholder={t.remediationPlaceholder}
               />
             </div>
           </CardContent>
@@ -486,28 +651,28 @@ export function ComplianceRuleDetailPage() {
         {/* Card 4 — Historik */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Historik</CardTitle>
+            <CardTitle className="text-base">{t.historyTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             {history.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Inga ändringar registrerade.</p>
+              <p className="text-sm text-muted-foreground">{t.noHistory}</p>
             ) : (
               <div className="space-y-4">
                 {history.map((entry) => (
                   <div key={entry.id} className="border-l-2 border-muted pl-4 pb-2">
                     <div className="flex items-center gap-2 mb-1">
                       <Badge variant={entry.action === "created" ? "default" : "secondary"} className="text-[10px] h-5">
-                        {entry.action === "created" ? "Skapad" : "Uppdaterad"}
+                        {entry.action === "created" ? t.actionCreated : t.actionUpdated}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
                         {entry.changed_by}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(entry.changed_at).toLocaleString("sv-SE")}
+                        {new Date(entry.changed_at).toLocaleString(t.locale)}
                       </span>
                     </div>
                     {entry.action === "updated" && entry.old_values && (
-                      <DiffView oldValues={entry.old_values} newValues={entry.new_values} />
+                      <DiffView oldValues={entry.old_values} newValues={entry.new_values} t={t} />
                     )}
                   </div>
                 ))}
@@ -520,7 +685,7 @@ export function ComplianceRuleDetailPage() {
         <div className="flex justify-end">
           <Button onClick={handleSave} disabled={!canSave || saving}>
             <Save className="mr-1 size-4" />
-            {saving ? "Sparar..." : "Spara ändringar"}
+            {saving ? t.saving : t.saveChanges}
           </Button>
         </div>
       </div>
@@ -535,25 +700,27 @@ export function ComplianceRuleDetailPage() {
 function DiffView({
   oldValues,
   newValues,
+  t,
 }: {
   oldValues: Record<string, unknown>;
   newValues: Record<string, unknown>;
+  t: T;
 }) {
   const changedFields = Object.keys(newValues).filter(
     (key) => JSON.stringify(oldValues[key]) !== JSON.stringify(newValues[key]),
   );
 
   if (changedFields.length === 0) {
-    return <p className="text-xs text-muted-foreground">Inga synliga ändringar.</p>;
+    return <p className="text-xs text-muted-foreground">{t.noVisibleChanges}</p>;
   }
 
   return (
     <div className="space-y-1 text-xs">
       {changedFields.map((key) => (
         <div key={key} className="flex flex-wrap gap-1">
-          <span className="font-medium">{FIELD_LABELS[key] || key}:</span>
-          <span className="line-through text-red-600">{formatValue(oldValues[key])}</span>
-          <span className="text-green-600">{formatValue(newValues[key])}</span>
+          <span className="font-medium">{t.fieldLabels[key] || key}:</span>
+          <span className="line-through text-red-600">{formatValue(oldValues[key], t)}</span>
+          <span className="text-green-600">{formatValue(newValues[key], t)}</span>
         </div>
       ))}
     </div>

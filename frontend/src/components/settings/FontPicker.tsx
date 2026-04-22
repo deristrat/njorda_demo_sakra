@@ -7,8 +7,26 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useFont } from "@/hooks/use-font";
+import { useLanguage, type Lang } from "@/lib/language";
+
+const translations = {
+  sv: {
+    bodyLabel: "Brödtext",
+    bodyHelp: "Typsnitt för brödtext och gränssnitt.",
+    brandLabel: "Siffror & rubriker (brand)",
+    brandHelp: "Typsnitt för KPI-värden, rubriker och sidomeny.",
+  },
+  en: {
+    bodyLabel: "Body text",
+    bodyHelp: "Font for body text and interface.",
+    brandLabel: "Numbers & headings (brand)",
+    brandHelp: "Font for KPI values, headings and sidebar.",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
 export function FontPicker() {
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const {
     currentFont,
     changeFont,
@@ -21,7 +39,7 @@ export function FontPicker() {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label>Brödtext</Label>
+        <Label>{t.bodyLabel}</Label>
         <Select value={currentFont} onValueChange={changeFont}>
           <SelectTrigger>
             <SelectValue />
@@ -35,12 +53,12 @@ export function FontPicker() {
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
-          Typsnitt för brödtext och gränssnitt.
+          {t.bodyHelp}
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label>Siffror & rubriker (brand)</Label>
+        <Label>{t.brandLabel}</Label>
         <Select value={currentBrandFont} onValueChange={changeBrandFont}>
           <SelectTrigger>
             <SelectValue />
@@ -54,7 +72,7 @@ export function FontPicker() {
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
-          Typsnitt för KPI-värden, rubriker och sidomeny.
+          {t.brandHelp}
         </p>
       </div>
     </div>

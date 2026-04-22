@@ -22,11 +22,40 @@ import {
   setExtractorModel,
   type ExtractorModel,
 } from "@/lib/api";
+import { useLanguage, type Lang } from "@/lib/language";
+
+const translations = {
+  sv: {
+    pageTitle: "Inställningar — Säkra",
+    headerTitle: "Inställningar",
+    typographyTitle: "Typografi",
+    typographyDesc: "Välj typsnitt för applikationen",
+    extractorTitle: "Extraktionsmodell",
+    extractorDesc: "Välj vilken AI-modell som används för dokumentextraktion",
+    modelLabel: "Modell",
+    loadingPlaceholder: "Laddar...",
+    modelHelp: "Modellen som används vid analys av uppladdade dokument.",
+  },
+  en: {
+    pageTitle: "Settings — Säkra",
+    headerTitle: "Settings",
+    typographyTitle: "Typography",
+    typographyDesc: "Choose the font for the application",
+    extractorTitle: "Extraction model",
+    extractorDesc: "Choose which AI model is used for document extraction",
+    modelLabel: "Model",
+    loadingPlaceholder: "Loading…",
+    modelHelp: "The model used when analyzing uploaded documents.",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
 export function FontSettingsPage() {
+  const { lang } = useLanguage();
+  const t = translations[lang];
+
   useEffect(() => {
-    document.title = "Inställningar — Säkra";
-  }, []);
+    document.title = t.pageTitle;
+  }, [t.pageTitle]);
 
   const [models, setModels] = useState<ExtractorModel[]>([]);
   const [currentModel, setCurrentModel] = useState<string>("");
@@ -53,13 +82,13 @@ export function FontSettingsPage() {
 
   return (
     <>
-      <AppHeader title="Inställningar" />
+      <AppHeader title={t.headerTitle} />
       <div className="p-6 max-w-2xl space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Typografi</CardTitle>
+            <CardTitle>{t.typographyTitle}</CardTitle>
             <CardDescription>
-              Välj typsnitt för applikationen
+              {t.typographyDesc}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -69,21 +98,21 @@ export function FontSettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Extraktionsmodell</CardTitle>
+            <CardTitle>{t.extractorTitle}</CardTitle>
             <CardDescription>
-              Välj vilken AI-modell som används för dokumentextraktion
+              {t.extractorDesc}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Label>Modell</Label>
+              <Label>{t.modelLabel}</Label>
               <Select
                 value={currentModel}
                 onValueChange={handleModelChange}
                 disabled={saving || models.length === 0}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Laddar..." />
+                  <SelectValue placeholder={t.loadingPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                   {models.map((m) => (
@@ -94,7 +123,7 @@ export function FontSettingsPage() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Modellen som används vid analys av uppladdade dokument.
+                {t.modelHelp}
               </p>
             </div>
           </CardContent>

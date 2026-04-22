@@ -16,6 +16,7 @@ import {
   fetchDocumentCompliance,
   recheckDocumentCompliance,
 } from "@/lib/api";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { ComplianceReport, ComplianceRuleOutcome } from "@/types";
 import { toast } from "sonner";
 
@@ -23,14 +24,49 @@ interface CompliancePanelProps {
   documentId: number;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  green: "Godkänd",
-  yellow: "Varningar",
-  red: "Underkänd",
-};
-
+const translations = {
+  sv: {
+    statusGreen: "Godkänd",
+    statusYellow: "Varningar",
+    statusRed: "Underkänd",
+    loading: "Laddar regelefterlevnad...",
+    noData: "Ingen regelefterlevnadsdata tillgänglig.",
+    title: "Regelefterlevnad",
+    recheck: "Kontrollera igen",
+    ofChecks: "kontroller godkända",
+    ofChecksConnector: "av",
+    skippedSuffix: "överhoppade",
+    skipped: "Överhoppad",
+    approvedChecks: "Godkända kontroller",
+    somethingWentWrong: "Något gick fel",
+    multipleIssuesSuffix: "problem hittade",
+  },
+  en: {
+    statusGreen: "Approved",
+    statusYellow: "Warnings",
+    statusRed: "Rejected",
+    loading: "Loading compliance…",
+    noData: "No compliance data available.",
+    title: "Compliance",
+    recheck: "Check again",
+    ofChecks: "checks approved",
+    ofChecksConnector: "of",
+    skippedSuffix: "skipped",
+    skipped: "Skipped",
+    approvedChecks: "Approved checks",
+    somethingWentWrong: "Something went wrong",
+    multipleIssuesSuffix: "issues found",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
 export function CompliancePanel({ documentId }: CompliancePanelProps) {
+  const { lang } = useLanguage();
+  const t = translations[lang];
+  const STATUS_LABELS: Record<string, string> = {
+    green: t.statusGreen,
+    yellow: t.statusYellow,
+    red: t.statusRed,
+  };
   const [report, setReport] = useState<ComplianceReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [rechecking, setRechecking] = useState(false);
@@ -39,8 +75,9 @@ export function CompliancePanel({ documentId }: CompliancePanelProps) {
   useEffect(() => {
     fetchDocumentCompliance(documentId)
       .then(setReport)
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
+      .catch((e) => toast.error(e instanceof Error ? e.message : t.somethingWentWrong))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentId]);
 
   const handleRecheck = async () => {
@@ -59,7 +96,7 @@ export function CompliancePanel({ documentId }: CompliancePanelProps) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
-          Laddar regelefterlevnad...
+          {t.loading}
         </CardContent>
       </Card>
     );
@@ -69,7 +106,7 @@ export function CompliancePanel({ documentId }: CompliancePanelProps) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
-          Ingen regelefterlevnadsdata tillgänglig.
+          {t.noData}
         </CardContent>
       </Card>
     );
@@ -100,7 +137,7 @@ export function CompliancePanel({ documentId }: CompliancePanelProps) {
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">Regelefterlevnad</CardTitle>
+          <CardTitle className="text-base">{t.title}</CardTitle>
           <Button
             variant="outline"
             size="sm"
@@ -110,7 +147,7 @@ export function CompliancePanel({ documentId }: CompliancePanelProps) {
             <RefreshCw
               className={`mr-1 size-3.5 ${rechecking ? "animate-spin" : ""}`}
             />
-            Kontrollera igen
+            {t.recheck}
           </Button>
         </div>
       </CardHeader>
@@ -125,10 +162,9 @@ export function CompliancePanel({ documentId }: CompliancePanelProps) {
               {STATUS_LABELS[report.status] || report.status}
             </Badge>
             <p className="text-xs text-muted-foreground">
-              {report.summary.passed} av {report.summary.total_rules} kontroller
-              godkända
+              {report.summary.passed} {t.ofChecksConnector} {report.summary.total_rules} {t.ofChecks}
               {report.summary.skipped > 0 &&
-                ` — ${report.summary.skipped} överhoppade`}
+                ` — ${report.summary.skipped} ${t.skippedSuffix}`}
             </p>
           </div>
         </div>
@@ -173,7 +209,7 @@ export function CompliancePanel({ documentId }: CompliancePanelProps) {
         {errors.length > 0 && (
           <div className="space-y-1">
             {errors.map((outcome) => (
-              <OutcomeRow key={outcome.rule_id} outcome={outcome} />
+              <OutcomeRow key={outcome.rule_id} outcome={outcome} multipleIssuesSuffix={t.multipleIssuesSuffix} />
             ))}
           </div>
         )}
@@ -182,7 +218,7 @@ export function CompliancePanel({ documentId }: CompliancePanelProps) {
         {warnings.length > 0 && (
           <div className="space-y-1">
             {warnings.map((outcome) => (
-              <OutcomeRow key={outcome.rule_id} outcome={outcome} />
+              <OutcomeRow key={outcome.rule_id} outcome={outcome} multipleIssuesSuffix={t.multipleIssuesSuffix} />
             ))}
           </div>
         )}
@@ -199,7 +235,7 @@ export function CompliancePanel({ documentId }: CompliancePanelProps) {
                 <div>
                   <span>{outcome.rule_name}</span>
                   <span className="ml-2 text-xs opacity-60">
-                    Överhoppad
+                    {t.skipped}
                   </span>
                 </div>
               </div>
@@ -219,7 +255,7 @@ export function CompliancePanel({ documentId }: CompliancePanelProps) {
               ) : (
                 <ChevronRight className="size-3" />
               )}
-              Godkända kontroller ({passed.length})
+              {t.approvedChecks} ({passed.length})
             </button>
             {showPassed && (
               <div className="mt-1 space-y-1">
@@ -250,7 +286,13 @@ export function CompliancePanel({ documentId }: CompliancePanelProps) {
   );
 }
 
-function OutcomeRow({ outcome }: { outcome: ComplianceRuleOutcome }) {
+function OutcomeRow({
+  outcome,
+  multipleIssuesSuffix,
+}: {
+  outcome: ComplianceRuleOutcome;
+  multipleIssuesSuffix: string;
+}) {
   const [expanded, setExpanded] = useState(false);
 
   const Icon = outcome.severity === "error" ? CircleX : CircleAlert;
@@ -281,7 +323,7 @@ function OutcomeRow({ outcome }: { outcome: ComplianceRuleOutcome }) {
             <p className="mt-0.5 text-xs text-muted-foreground">
               {outcome.findings.length === 1
                 ? outcome.findings[0].message
-                : `${outcome.findings.length} problem hittade`}
+                : `${outcome.findings.length} ${multipleIssuesSuffix}`}
             </p>
           )}
         </div>

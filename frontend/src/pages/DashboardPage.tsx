@@ -6,15 +6,38 @@ import { PieChart } from "@/components/charts/PieChart";
 import { MultiLineChart } from "@/components/charts/MultiLineChart";
 import { BarChart } from "@/components/charts/BarChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage, type Lang } from "@/lib/language";
+
+const translations = {
+  sv: {
+    pageTitle: "Dashboard — Säkra",
+    headerTitle: "Dashboard",
+    portfolioAllocation: "Portföljfördelning",
+    aumDevelopment: "AUM-utveckling (mkr)",
+    meetingsPerWeek: "Möten per vecka",
+    toastNotifications: "Toast-notifieringar",
+  },
+  en: {
+    pageTitle: "Dashboard — Säkra",
+    headerTitle: "Dashboard",
+    portfolioAllocation: "Portfolio allocation",
+    aumDevelopment: "AUM development (MSEK)",
+    meetingsPerWeek: "Meetings per week",
+    toastNotifications: "Toast notifications",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
 export function DashboardPage() {
+  const { lang } = useLanguage();
+  const t = translations[lang];
+
   useEffect(() => {
-    document.title = "Dashboard — Säkra";
-  }, []);
+    document.title = t.pageTitle;
+  }, [t.pageTitle]);
 
   return (
     <>
-      <AppHeader title="Dashboard" />
+      <AppHeader title={t.headerTitle} />
       <div className="space-y-6 p-6">
         <KPIGrid />
 
@@ -22,7 +45,7 @@ export function DashboardPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Portföljfördelning
+                {t.portfolioAllocation}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -33,7 +56,7 @@ export function DashboardPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                AUM-utveckling (mkr)
+                {t.aumDevelopment}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -45,7 +68,7 @@ export function DashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Möten per vecka
+              {t.meetingsPerWeek}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -56,7 +79,7 @@ export function DashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Toast-notifieringar
+              {t.toastNotifications}
             </CardTitle>
           </CardHeader>
           <CardContent>

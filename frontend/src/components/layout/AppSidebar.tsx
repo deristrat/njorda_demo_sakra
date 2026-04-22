@@ -18,6 +18,7 @@ import {
   FileBarChart,
   Inbox,
   Archive,
+  Languages,
   X,
 } from "lucide-react";
 import {
@@ -49,6 +50,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { NjordaLogo } from "./NjordaLogo";
 import { useAuth } from "@/lib/auth";
+import { useLanguage, type Lang } from "@/lib/language";
 import { fetchUsers, type AppUser } from "@/lib/api";
 import { getDefaultPath } from "@/lib/navigation";
 import type { UserRole } from "@/types";
@@ -60,53 +62,110 @@ interface NavItem {
 }
 
 interface NavSubMenu {
+  key: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   items: NavItem[];
 }
 
-function getNavItems(role: UserRole | null): NavItem[] {
+const translations = {
+  sv: {
+    navStart: "Start",
+    navAdvisors: "Rådgivare",
+    navAllDocs: "Alla dokument",
+    navRuleEngine: "Regelmotor",
+    navAudit: "Audit",
+    navInbox: "Inkorg",
+    navArchive: "Arkiv",
+    navClients: "Klienter",
+    navSettings: "Inställningar",
+    navReports: "Rapporter",
+    navComplianceReport: "Compliance rapport",
+    navUIExamples: "UI Examples",
+    navDashboard: "Dashboard",
+    roleAdmin: "Admin",
+    roleCompliance: "Compliance",
+    roleAdvisor: "Rådgivare",
+    docs: "Dokumentation",
+    switchUser: "Byt användare",
+    impersonationActive: "Aktiv",
+    backToAdmin: "Tillbaka till Admin",
+    userFallback: "Användare",
+    logout: "Logga ut",
+    toggleLabel: "English",
+  },
+  en: {
+    navStart: "Home",
+    navAdvisors: "Advisors",
+    navAllDocs: "All documents",
+    navRuleEngine: "Rule engine",
+    navAudit: "Audit",
+    navInbox: "Inbox",
+    navArchive: "Archive",
+    navClients: "Clients",
+    navSettings: "Settings",
+    navReports: "Reports",
+    navComplianceReport: "Compliance report",
+    navUIExamples: "UI Examples",
+    navDashboard: "Dashboard",
+    roleAdmin: "Admin",
+    roleCompliance: "Compliance",
+    roleAdvisor: "Advisor",
+    docs: "Documentation",
+    switchUser: "Switch user",
+    impersonationActive: "Active",
+    backToAdmin: "Back to Admin",
+    userFallback: "User",
+    logout: "Log out",
+    toggleLabel: "Svenska",
+  },
+} satisfies Record<Lang, Record<string, string>>;
+
+type T = typeof translations["sv"];
+
+function getNavItems(role: UserRole | null, t: T): NavItem[] {
   switch (role) {
     case "compliance":
       return [
-        { label: "Start", icon: Home, path: "/start" },
-        { label: "Rådgivare", icon: Briefcase, path: "/advisors" },
-        { label: "Alla dokument", icon: FileText, path: "/documents" },
-        { label: "Regelmotor", icon: ShieldCheck, path: "/settings/compliance" },
-        { label: "Audit", icon: ClipboardList, path: "/audit" },
+        { label: t.navStart, icon: Home, path: "/start" },
+        { label: t.navAdvisors, icon: Briefcase, path: "/advisors" },
+        { label: t.navAllDocs, icon: FileText, path: "/documents" },
+        { label: t.navRuleEngine, icon: ShieldCheck, path: "/settings/compliance" },
+        { label: t.navAudit, icon: ClipboardList, path: "/audit" },
       ];
     case "advisor":
       return [
-        { label: "Start", icon: Home, path: "/start" },
-        { label: "Inkorg", icon: Inbox, path: "/inbox" },
-        { label: "Arkiv", icon: Archive, path: "/archive" },
-        { label: "Klienter", icon: Users, path: "/clients" },
+        { label: t.navStart, icon: Home, path: "/start" },
+        { label: t.navInbox, icon: Inbox, path: "/inbox" },
+        { label: t.navArchive, icon: Archive, path: "/archive" },
+        { label: t.navClients, icon: Users, path: "/clients" },
       ];
     case "njorda_admin":
       return [
-        { label: "Start", icon: Home, path: "/start" },
-        { label: "Inkorg", icon: Inbox, path: "/inbox" },
-        { label: "Arkiv", icon: Archive, path: "/archive" },
-        { label: "Alla dokument", icon: FileText, path: "/documents" },
-        { label: "Klienter", icon: Users, path: "/clients" },
-        { label: "Rådgivare", icon: Briefcase, path: "/advisors" },
-        { label: "Regelmotor", icon: ShieldCheck, path: "/settings/compliance" },
-        { label: "Audit", icon: ClipboardList, path: "/audit" },
-        { label: "Inställningar", icon: Settings, path: "/settings" },
+        { label: t.navStart, icon: Home, path: "/start" },
+        { label: t.navInbox, icon: Inbox, path: "/inbox" },
+        { label: t.navArchive, icon: Archive, path: "/archive" },
+        { label: t.navAllDocs, icon: FileText, path: "/documents" },
+        { label: t.navClients, icon: Users, path: "/clients" },
+        { label: t.navAdvisors, icon: Briefcase, path: "/advisors" },
+        { label: t.navRuleEngine, icon: ShieldCheck, path: "/settings/compliance" },
+        { label: t.navAudit, icon: ClipboardList, path: "/audit" },
+        { label: t.navSettings, icon: Settings, path: "/settings" },
       ];
     default:
       return [];
   }
 }
 
-function getSubMenus(role: UserRole | null): NavSubMenu[] {
+function getSubMenus(role: UserRole | null, t: T): NavSubMenu[] {
   if (role === "compliance" || role === "njorda_admin") {
     return [
       {
-        label: "Rapporter",
+        key: "reports",
+        label: t.navReports,
         icon: BarChart3,
         items: [
-          { label: "Compliance rapport", icon: FileBarChart, path: "/reports/compliance" },
+          { label: t.navComplianceReport, icon: FileBarChart, path: "/reports/compliance" },
         ],
       },
     ];
@@ -114,17 +173,13 @@ function getSubMenus(role: UserRole | null): NavSubMenu[] {
   return [];
 }
 
-const exampleNav = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/examples/dashboard" },
-  { label: "Klienter", icon: Users, path: "/examples/clients" },
-  { label: "Inställningar", icon: Settings, path: "/examples/settings" },
-];
-
-const ROLE_LABELS: Record<string, string> = {
-  njorda_admin: "Admin",
-  compliance: "Compliance",
-  advisor: "Rådgivare",
-};
+function getExampleNav(t: T) {
+  return [
+    { label: t.navDashboard, icon: LayoutDashboard, path: "/examples/dashboard" },
+    { label: t.navClients, icon: Users, path: "/examples/clients" },
+    { label: t.navSettings, icon: Settings, path: "/examples/settings" },
+  ];
+}
 
 const ROLE_COLORS: Record<string, string> = {
   njorda_admin: "bg-violet-100 text-violet-700",
@@ -137,23 +192,32 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const { lang, toggle: toggleLang } = useLanguage();
+  const t = translations[lang];
   const [examplesOpen, setExamplesOpen] = useState(false);
-  const [subMenuOpen, setSubMenuOpen] = useState<Record<string, boolean>>({ Rapporter: true });
+  const [subMenuOpen, setSubMenuOpen] = useState<Record<string, boolean>>({ reports: true });
   const {
     username, name: authName, role, effectiveRole,
     isImpersonating, impersonatingAs,
     logout, startImpersonation, stopImpersonation,
   } = useAuth();
 
+  const roleLabel: Record<string, string> = {
+    njorda_admin: t.roleAdmin,
+    compliance: t.roleCompliance,
+    advisor: t.roleAdvisor,
+  };
+
   // Determine display name/initials based on impersonation
   const displayName = isImpersonating && impersonatingAs
     ? impersonatingAs.name
-    : authName || username || "Användare";
+    : authName || username || t.userFallback;
   const initials = displayName.slice(0, 2).toUpperCase();
 
   // Role-based navigation
-  const navItems = getNavItems(effectiveRole);
-  const subMenus = getSubMenus(effectiveRole);
+  const navItems = getNavItems(effectiveRole, t);
+  const subMenus = getSubMenus(effectiveRole, t);
+  const exampleNav = getExampleNav(t);
 
   // User switcher state (only for njorda_admin)
   const [users, setUsers] = useState<AppUser[]>([]);
@@ -224,16 +288,16 @@ export function AppSidebar() {
 
         {/* Role-based submenus (e.g. Rapporter) */}
         {subMenus.map((menu) => {
-          const isOpen = subMenuOpen[menu.label] ?? false;
+          const isOpen = subMenuOpen[menu.key] ?? false;
           const hasActiveChild = menu.items.some((item) =>
             isItemActive(item.path),
           );
           return (
-            <SidebarGroup key={menu.label}>
+            <SidebarGroup key={menu.key}>
               <Collapsible
                 open={isOpen || hasActiveChild}
                 onOpenChange={(open) =>
-                  setSubMenuOpen((prev) => ({ ...prev, [menu.label]: open }))
+                  setSubMenuOpen((prev) => ({ ...prev, [menu.key]: open }))
                 }
               >
                 <CollapsibleTrigger asChild>
@@ -275,7 +339,7 @@ export function AppSidebar() {
                   <ChevronRight
                     className={`size-3 mr-1 transition-transform duration-200 ${examplesOpen ? "rotate-90" : ""}`}
                   />
-                  UI Examples
+                  {t.navUIExamples}
                 </SidebarGroupLabel>
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -305,11 +369,21 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
+              onClick={toggleLang}
+              tooltip={t.toggleLabel}
+            >
+              <Languages className="size-4" />
+              <span>{t.toggleLabel}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton
               onClick={() => window.open("/docs", "_blank")}
-              tooltip="Dokumentation"
+              tooltip={t.docs}
             >
               <BookOpen className="size-4" />
-              <span>Dokumentation</span>
+              <span>{t.docs}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
@@ -318,9 +392,9 @@ export function AppSidebar() {
             <SidebarMenuItem>
               <DropdownMenu onOpenChange={(open) => { if (open) loadUsers(); }}>
                 <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton tooltip="Byt användare">
+                  <SidebarMenuButton tooltip={t.switchUser}>
                     <UserCog className="size-4" />
-                    <span>Byt användare</span>
+                    <span>{t.switchUser}</span>
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 {isImpersonating && (
@@ -329,7 +403,7 @@ export function AppSidebar() {
                     className="absolute right-1 top-1/2 -translate-y-1/2 bg-amber-100 text-amber-800 border-amber-300 text-[10px] px-1.5 py-0 gap-1 cursor-pointer hover:bg-amber-200 z-10"
                     onClick={handleStopImpersonation}
                   >
-                    Aktiv
+                    {t.impersonationActive}
                     <X className="size-3" />
                   </Badge>
                 )}
@@ -337,7 +411,7 @@ export function AppSidebar() {
                   {isImpersonating && (
                     <>
                       <DropdownMenuItem onClick={handleStopImpersonation}>
-                        Tillbaka till Admin
+                        {t.backToAdmin}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </>
@@ -347,7 +421,7 @@ export function AppSidebar() {
                       <div key={r}>
                         <DropdownMenuLabel className="flex items-center gap-2">
                           <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 ${ROLE_COLORS[r] || ""}`}>
-                            {ROLE_LABELS[r] || r}
+                            {roleLabel[r] || r}
                           </Badge>
                         </DropdownMenuLabel>
                         {usersByRole[r].map((u) => (
@@ -382,7 +456,7 @@ export function AppSidebar() {
               <DropdownMenuContent side="top" className="w-48">
                 <DropdownMenuItem onClick={async () => { await logout(); navigate("/login"); }}>
                   <LogOut className="mr-2 size-4" />
-                  Logga ut
+                  {t.logout}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

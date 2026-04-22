@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import {
   useReactTable,
@@ -20,12 +20,52 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchAdvisors } from "@/lib/api";
-import { advisorListColumns } from "./advisorListColumns";
+import { getAdvisorListColumns } from "./advisorListColumns";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { Advisor } from "@/types";
 import { toast } from "sonner";
 
+const translations = {
+  sv: {
+    somethingWentWrong: "Något gick fel",
+    searchPlaceholder: "Sök rådgivare...",
+    emptyState:
+      "Inga rådgivare hittats. Ladda upp dokument för att skapa rådgivare automatiskt.",
+    showing: "Visar",
+    of: "av",
+    advisors: "rådgivare",
+    advisor: "Rådgivare",
+    firm: "Företag",
+    documents: "Dokument",
+    clients: "Klienter",
+    avgScore: "Snittpoäng",
+    issues: "Avvikelser",
+    warnings: "Varningar",
+    latestDocument: "Senaste dokument",
+  },
+  en: {
+    somethingWentWrong: "Something went wrong",
+    searchPlaceholder: "Search advisors...",
+    emptyState:
+      "No advisors found. Upload documents to create advisors automatically.",
+    showing: "Showing",
+    of: "of",
+    advisors: "advisors",
+    advisor: "Advisor",
+    firm: "Firm",
+    documents: "Documents",
+    clients: "Clients",
+    avgScore: "Avg. score",
+    issues: "Issues",
+    warnings: "Warnings",
+    latestDocument: "Latest document",
+  },
+} satisfies Record<Lang, Record<string, string>>;
+
 export function AdvisorsListTable() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const [data, setData] = useState<Advisor[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -34,13 +74,28 @@ export function AdvisorsListTable() {
   useEffect(() => {
     fetchAdvisors()
       .then(setData)
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
+      .catch((e) => toast.error(e instanceof Error ? e.message : t.somethingWentWrong))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t.somethingWentWrong]);
+
+  const columns = useMemo(
+    () =>
+      getAdvisorListColumns({
+        advisor: t.advisor,
+        firm: t.firm,
+        documents: t.documents,
+        clients: t.clients,
+        avgScore: t.avgScore,
+        issues: t.issues,
+        warnings: t.warnings,
+        latestDocument: t.latestDocument,
+      }),
+    [t],
+  );
 
   const table = useReactTable({
     data,
-    columns: advisorListColumns,
+    columns,
     state: { sorting, globalFilter },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
@@ -64,7 +119,7 @@ export function AdvisorsListTable() {
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Sök rådgivare..."
+            placeholder={t.searchPlaceholder}
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="bg-card pl-9"
@@ -111,11 +166,10 @@ export function AdvisorsListTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={advisorListColumns.length}
+                  colSpan={columns.length}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  Inga rådgivare hittats. Ladda upp dokument för att skapa
-                  rådgivare automatiskt.
+                  {t.emptyState}
                 </TableCell>
               </TableRow>
             )}
@@ -124,7 +178,7 @@ export function AdvisorsListTable() {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Visar {table.getRowModel().rows.length} av {data.length} rådgivare
+        {t.showing} {table.getRowModel().rows.length} {t.of} {data.length} {t.advisors}
       </p>
     </div>
   );

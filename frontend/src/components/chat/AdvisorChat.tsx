@@ -6,14 +6,63 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useChat, type ChatMessage, type ToolCall } from "@/lib/chat-context";
 import { uploadDocuments, processDocumentsSSE } from "@/lib/api";
+import { useLanguage, type Lang } from "@/lib/language";
 
-const DEFAULT_SUGGESTIONS = [
-  "Vilka klienter har jag?",
-  "Vilka dokument har avvikelser?",
-  "Sammanfatta mitt dokumentläge",
-];
-
-const DEFAULT_SUBTITLE = "Skriv en fråga, klistra in mötesanteckningar eller ladda upp ett dokument – jag hjälper dig strukturera ett rådgivningsunderlag.";
+const translations = {
+  sv: {
+    defaultSuggestion1: "Vilka klienter har jag?",
+    defaultSuggestion2: "Vilka dokument har avvikelser?",
+    defaultSuggestion3: "Sammanfatta mitt dokumentläge",
+    defaultSubtitle:
+      "Skriv en fråga, klistra in mötesanteckningar eller ladda upp ett dokument – jag hjälper dig strukturera ett rådgivningsunderlag.",
+    thinking: "Tänker...",
+    dropToUpload: "Släpp för att ladda upp",
+    aiAssistant: "AI Assistent",
+    clear: "Rensa",
+    howCanIHelp: "Hur kan jag hjälpa dig?",
+    uploadDocTitle: "Ladda upp dokument",
+    uploading: "Laddar upp dokument...",
+    askQuestion: "Ställ en fråga...",
+    reviewOne: (name: string) =>
+      `Jag har laddat upp dokumentet "${name}". Kan du granska det?`,
+    reviewMany: (count: number, names: string) =>
+      `Jag har laddat upp ${count} dokument: ${names}. Kan du granska dem?`,
+  },
+  en: {
+    defaultSuggestion1: "Which clients do I have?",
+    defaultSuggestion2: "Which documents have issues?",
+    defaultSuggestion3: "Summarize my document status",
+    defaultSubtitle:
+      "Type a question, paste meeting notes or upload a document – I'll help you structure an advisory brief.",
+    thinking: "Thinking…",
+    dropToUpload: "Drop to upload",
+    aiAssistant: "AI Assistant",
+    clear: "Clear",
+    howCanIHelp: "How can I help you?",
+    uploadDocTitle: "Upload document",
+    uploading: "Uploading document…",
+    askQuestion: "Ask a question…",
+    reviewOne: (name: string) =>
+      `I've uploaded the document "${name}". Can you review it?`,
+    reviewMany: (count: number, names: string) =>
+      `I've uploaded ${count} documents: ${names}. Can you review them?`,
+  },
+} satisfies Record<Lang, {
+  defaultSuggestion1: string;
+  defaultSuggestion2: string;
+  defaultSuggestion3: string;
+  defaultSubtitle: string;
+  thinking: string;
+  dropToUpload: string;
+  aiAssistant: string;
+  clear: string;
+  howCanIHelp: string;
+  uploadDocTitle: string;
+  uploading: string;
+  askQuestion: string;
+  reviewOne: (name: string) => string;
+  reviewMany: (count: number, names: string) => string;
+}>;
 
 function ToolCallBadge({ tool }: { tool: ToolCall }) {
   return (
@@ -28,7 +77,7 @@ function ToolCallBadge({ tool }: { tool: ToolCall }) {
   );
 }
 
-function MessageBubble({ msg }: { msg: ChatMessage }) {
+function MessageBubble({ msg, thinkingLabel }: { msg: ChatMessage; thinkingLabel: string }) {
   const isUser = msg.role === "user";
 
   return (
@@ -55,7 +104,7 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
         {!msg.content && msg.toolCalls && msg.toolCalls.some(t => t.status === "running") && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Loader2 className="size-3 animate-spin" />
-            Tänker...
+            {thinkingLabel}
           </div>
         )}
       </div>
@@ -71,9 +120,19 @@ interface AdvisorChatProps {
 
 export function AdvisorChat({
   expanded = false,
-  suggestions = DEFAULT_SUGGESTIONS,
-  subtitle = DEFAULT_SUBTITLE,
+  suggestions,
+  subtitle,
 }: AdvisorChatProps) {
+  const { lang } = useLanguage();
+  const t = translations[lang];
+  const defaultSuggestions = [
+    t.defaultSuggestion1,
+    t.defaultSuggestion2,
+    t.defaultSuggestion3,
+  ];
+  const effectiveSuggestions = suggestions ?? defaultSuggestions;
+  const effectiveSubtitle = subtitle ?? t.defaultSubtitle;
+
   const { messages, isStreaming, sendMessage, stopStreaming, clearChat } =
     useChat();
   const [input, setInput] = useState("");
@@ -95,8 +154,8 @@ export function AdvisorChat({
         const names = files.map((f) => f.name).join(", ");
         await sendMessage(
           files.length === 1
-            ? `Jag har laddat upp dokumentet "${names}". Kan du granska det?`
-            : `Jag har laddat upp ${files.length} dokument: ${names}. Kan du granska dem?`,
+            ? t.reviewOne(names)
+            : t.reviewMany(files.length, names),
         );
       } catch (err) {
         console.error("File upload error:", err);
@@ -104,7 +163,7 @@ export function AdvisorChat({
         setFileUploading(false);
       }
     },
-    [sendMessage],
+    [sendMessage, t],
   );
 
   const handleFileDrop = useCallback(
@@ -168,7 +227,7 @@ export function AdvisorChat({
           <div className="flex flex-col items-center gap-2">
             <Upload className="size-6 text-primary" />
             <p className="text-sm font-medium text-primary">
-              Släpp för att ladda upp
+              {t.dropToUpload}
             </p>
           </div>
         </div>
@@ -179,7 +238,7 @@ export function AdvisorChat({
             <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
               <Bot className="size-4 text-primary" />
             </div>
-            <span className="font-brand text-sm font-medium">AI Assistent</span>
+            <span className="font-brand text-sm font-medium">{t.aiAssistant}</span>
           </div>
           {messages.length > 0 && (
             <Button
@@ -189,7 +248,7 @@ export function AdvisorChat({
               onClick={clearChat}
             >
               <Trash2 className="size-3" />
-              Rensa
+              {t.clear}
             </Button>
           )}
         </div>
@@ -208,14 +267,14 @@ export function AdvisorChat({
               </div>
               <div>
                 <p className="text-sm font-medium">
-                  Hur kan jag hjälpa dig?
+                  {t.howCanIHelp}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {subtitle}
+                  {effectiveSubtitle}
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-2">
-                {suggestions.map((s) => (
+                {effectiveSuggestions.map((s) => (
                   <button
                     key={s}
                     className="rounded-full border bg-background px-3 py-1.5 text-xs transition-colors hover:bg-muted"
@@ -228,7 +287,7 @@ export function AdvisorChat({
             </div>
           )}
           {messages.map((msg, i) => (
-            <MessageBubble key={i} msg={msg} />
+            <MessageBubble key={i} msg={msg} thinkingLabel={t.thinking} />
           ))}
         </div>
 
@@ -240,7 +299,7 @@ export function AdvisorChat({
               className="mb-0.5 shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
               onClick={() => fileInputRef.current?.click()}
               disabled={isStreaming || fileUploading}
-              title="Ladda upp dokument"
+              title={t.uploadDocTitle}
             >
               <Paperclip className="size-4" />
             </button>
@@ -260,7 +319,7 @@ export function AdvisorChat({
               value={input}
               onChange={handleTextareaInput}
               onKeyDown={handleKeyDown}
-              placeholder={fileUploading ? "Laddar upp dokument..." : "Ställ en fråga..."}
+              placeholder={fileUploading ? t.uploading : t.askQuestion}
               rows={1}
               className="flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               disabled={isStreaming || fileUploading}

@@ -22,22 +22,114 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createComplianceRule, fetchComplianceRules } from "@/lib/api";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { ComplianceRuleConfig } from "@/types";
 import { toast } from "sonner";
 import {
-  CATEGORY_LABELS,
-  DOC_TYPE_OPTIONS,
-  RULE_TYPE_LABELS,
+  CATEGORY_LABELS_BY_LANG,
+  RULE_TYPE_LABELS_BY_LANG,
+  getDocTypeOptions,
   RuleParamsEditor,
 } from "@/components/compliance/RuleParamsEditor";
 
 const NO_PARENT = "__none__";
 
-const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABELS);
-const RULE_TYPE_OPTIONS = Object.entries(RULE_TYPE_LABELS);
+const translations = {
+  sv: {
+    pageTitle: "Ny regel — Säkra",
+    headerTitle: "Ny regel",
+    somethingWentWrong: "Något gick fel",
+    ruleCreated: "Regeln har skapats",
+    couldNotCreate: "Kunde inte skapa regeln",
+    back: "Tillbaka",
+    basicInfoTitle: "Grundinformation",
+    ruleId: "Regel-ID",
+    ruleIdPlaceholder: "t.ex. KYC_015",
+    name: "Namn",
+    namePlaceholder: "t.ex. Kontrollera riskprofil",
+    category: "Kategori",
+    categoryPlaceholder: "Välj kategori...",
+    ruleType: "Regeltyp",
+    ruleTypePlaceholder: "Välj regeltyp...",
+    defaultSeverity: "Standardallvarlighet",
+    severityWarning: "Varning",
+    severityError: "Fel",
+    tier: "Nivå",
+    tierStandard: "Standard (Tier 1)",
+    tierAI: "AI (Tier 2)",
+    configTitle: "Konfiguration",
+    description: "Beskrivning",
+    descriptionPlaceholder: "Beskriv vad regeln kontrollerar...",
+    documentTypes: "Dokumenttyper",
+    atLeastOneDocType: "Minst en dokumenttyp måste vara vald",
+    parentRule: "Överordnad regel",
+    selectPlaceholder: "Välj...",
+    noneStandalone: "Ingen (fristående)",
+    settingsTitle: "Inställningar",
+    active: "Aktiv",
+    activeHelp: "Inaktiva regler körs inte vid granskning",
+    maxDeduction: "Maxpoäng (avdrag)",
+    remediation: "Åtgärdsförslag",
+    remediationPlaceholder: "Beskriv hur regeln kan åtgärdas vid avvikelse...",
+    creating: "Skapar...",
+    create: "Skapa regel",
+  },
+  en: {
+    pageTitle: "New rule — Säkra",
+    headerTitle: "New rule",
+    somethingWentWrong: "Something went wrong",
+    ruleCreated: "Rule created",
+    couldNotCreate: "Could not create rule",
+    back: "Back",
+    basicInfoTitle: "Basic information",
+    ruleId: "Rule ID",
+    ruleIdPlaceholder: "e.g. KYC_015",
+    name: "Name",
+    namePlaceholder: "e.g. Check risk profile",
+    category: "Category",
+    categoryPlaceholder: "Select category…",
+    ruleType: "Rule type",
+    ruleTypePlaceholder: "Select rule type…",
+    defaultSeverity: "Default severity",
+    severityWarning: "Warning",
+    severityError: "Error",
+    tier: "Tier",
+    tierStandard: "Standard (Tier 1)",
+    tierAI: "AI (Tier 2)",
+    configTitle: "Configuration",
+    description: "Description",
+    descriptionPlaceholder: "Describe what the rule checks…",
+    documentTypes: "Document types",
+    atLeastOneDocType: "At least one document type must be selected",
+    parentRule: "Parent rule",
+    selectPlaceholder: "Select…",
+    noneStandalone: "None (standalone)",
+    settingsTitle: "Settings",
+    active: "Active",
+    activeHelp: "Inactive rules are not run during review",
+    maxDeduction: "Max deduction",
+    remediation: "Remediation",
+    remediationPlaceholder: "Describe how the rule can be remediated when violated…",
+    creating: "Creating…",
+    create: "Create rule",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
 export function CreateComplianceRulePage() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const t = translations[lang];
+
+  const CATEGORY_OPTIONS = useMemo(
+    () => Object.entries(CATEGORY_LABELS_BY_LANG[lang]),
+    [lang],
+  );
+  const RULE_TYPE_OPTIONS = useMemo(
+    () => Object.entries(RULE_TYPE_LABELS_BY_LANG[lang]),
+    [lang],
+  );
+  const DOC_TYPE_OPTIONS = useMemo(() => getDocTypeOptions(lang), [lang]);
+
   const [allRules, setAllRules] = useState<ComplianceRuleConfig[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -61,9 +153,10 @@ export function CreateComplianceRulePage() {
   const [remediation, setRemediation] = useState("");
 
   useEffect(() => {
-    document.title = "Ny regel — Säkra";
-    fetchComplianceRules().then(setAllRules).catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"));
-  }, []);
+    document.title = t.pageTitle;
+    fetchComplianceRules().then(setAllRules).catch((e) => toast.error(e instanceof Error ? e.message : t.somethingWentWrong));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t.pageTitle]);
 
   const parentOptions = useMemo(
     () => allRules.filter((r) => r.rule_id !== ruleId),
@@ -121,10 +214,10 @@ export function CreateComplianceRulePage() {
         remediation: remediation || undefined,
         enabled,
       });
-      toast.success("Regeln har skapats");
+      toast.success(t.ruleCreated);
       navigate(`/settings/compliance/${ruleId.trim()}`);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Kunde inte skapa regeln";
+      const msg = e instanceof Error ? e.message : t.couldNotCreate;
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -133,7 +226,7 @@ export function CreateComplianceRulePage() {
 
   return (
     <>
-      <AppHeader title="Ny regel" />
+      <AppHeader title={t.headerTitle} />
       <div className="p-6 space-y-6 max-w-3xl">
         {/* Top bar */}
         <div className="flex items-center gap-3">
@@ -143,42 +236,42 @@ export function CreateComplianceRulePage() {
             onClick={() => navigate("/settings/compliance")}
           >
             <ArrowLeft className="mr-1 size-4" />
-            Tillbaka
+            {t.back}
           </Button>
         </div>
 
         {/* Card 1 — Grundinformation */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Grundinformation</CardTitle>
+            <CardTitle className="text-base">{t.basicInfoTitle}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="new-rule-id">Regel-ID</Label>
+                <Label htmlFor="new-rule-id">{t.ruleId}</Label>
                 <Input
                   id="new-rule-id"
                   value={ruleId}
                   onChange={(e) => setRuleId(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ""))}
-                  placeholder="t.ex. KYC_015"
+                  placeholder={t.ruleIdPlaceholder}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="new-rule-name">Namn</Label>
+                <Label htmlFor="new-rule-name">{t.name}</Label>
                 <Input
                   id="new-rule-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="t.ex. Kontrollera riskprofil"
+                  placeholder={t.namePlaceholder}
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Kategori</Label>
+                <Label>{t.category}</Label>
                 <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Välj kategori..." />
+                    <SelectValue placeholder={t.categoryPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
                     {CATEGORY_OPTIONS.map(([value, label]) => (
@@ -188,10 +281,10 @@ export function CreateComplianceRulePage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Regeltyp</Label>
+                <Label>{t.ruleType}</Label>
                 <Select value={ruleType} onValueChange={(v) => { setRuleType(v); setRuleParams({}); }}>
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Välj regeltyp..." />
+                    <SelectValue placeholder={t.ruleTypePlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
                     {RULE_TYPE_OPTIONS.map(([value, label]) => (
@@ -203,26 +296,26 @@ export function CreateComplianceRulePage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Standardallvarlighet</Label>
+                <Label>{t.defaultSeverity}</Label>
                 <Select value={defaultSeverity} onValueChange={setDefaultSeverity}>
                   <SelectTrigger className="h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="warning">Varning</SelectItem>
-                    <SelectItem value="error">Fel</SelectItem>
+                    <SelectItem value="warning">{t.severityWarning}</SelectItem>
+                    <SelectItem value="error">{t.severityError}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Nivå</Label>
+                <Label>{t.tier}</Label>
                 <Select value={String(tier)} onValueChange={(v) => setTier(Number(v))}>
                   <SelectTrigger className="h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Standard (Tier 1)</SelectItem>
-                    <SelectItem value="2">AI (Tier 2)</SelectItem>
+                    <SelectItem value="1">{t.tierStandard}</SelectItem>
+                    <SelectItem value="2">{t.tierAI}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -233,23 +326,23 @@ export function CreateComplianceRulePage() {
         {/* Card 2 — Konfiguration */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Konfiguration</CardTitle>
+            <CardTitle className="text-base">{t.configTitle}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-1.5">
-              <Label htmlFor="new-rule-description">Beskrivning</Label>
+              <Label htmlFor="new-rule-description">{t.description}</Label>
               <Textarea
                 id="new-rule-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                placeholder="Beskriv vad regeln kontrollerar..."
+                placeholder={t.descriptionPlaceholder}
               />
             </div>
 
             {/* Document types */}
             <div className="space-y-2">
-              <Label>Dokumenttyper</Label>
+              <Label>{t.documentTypes}</Label>
               <div className="flex flex-wrap gap-x-5 gap-y-2">
                 {DOC_TYPE_OPTIONS.map(([value, label]) => {
                   const isAll = value === "all";
@@ -266,8 +359,8 @@ export function CreateComplianceRulePage() {
                           } else {
                             setDocumentTypes((prev) =>
                               c
-                                ? [...prev.filter((t) => t !== "all"), value]
-                                : prev.filter((t) => t !== value),
+                                ? [...prev.filter((ty) => ty !== "all"), value]
+                                : prev.filter((ty) => ty !== value),
                             );
                           }
                         }}
@@ -278,19 +371,19 @@ export function CreateComplianceRulePage() {
                 })}
               </div>
               {documentTypes.length === 0 && (
-                <p className="text-xs text-destructive">Minst en dokumenttyp måste vara vald</p>
+                <p className="text-xs text-destructive">{t.atLeastOneDocType}</p>
               )}
             </div>
 
             {/* Parent rule */}
             <div className="space-y-1.5">
-              <Label>Överordnad regel</Label>
+              <Label>{t.parentRule}</Label>
               <Select value={parentRuleId} onValueChange={setParentRuleId}>
                 <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Välj..." />
+                  <SelectValue placeholder={t.selectPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NO_PARENT}>Ingen (fristående)</SelectItem>
+                  <SelectItem value={NO_PARENT}>{t.noneStandalone}</SelectItem>
                   {parentOptions.map((r) => (
                     <SelectItem key={r.rule_id} value={r.rule_id}>{r.name}</SelectItem>
                   ))}
@@ -312,21 +405,21 @@ export function CreateComplianceRulePage() {
         {/* Card 3 — Inställningar */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Inställningar</CardTitle>
+            <CardTitle className="text-base">{t.settingsTitle}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <Label>Aktiv</Label>
+                <Label>{t.active}</Label>
                 <p className="text-xs text-muted-foreground">
-                  Inaktiva regler körs inte vid granskning
+                  {t.activeHelp}
                 </p>
               </div>
               <Switch checked={enabled} onCheckedChange={setEnabled} />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="new-max-deduction">Maxpoäng (avdrag)</Label>
+              <Label htmlFor="new-max-deduction">{t.maxDeduction}</Label>
               <Input
                 id="new-max-deduction"
                 type="number"
@@ -342,13 +435,13 @@ export function CreateComplianceRulePage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="new-remediation">Åtgärdsförslag</Label>
+              <Label htmlFor="new-remediation">{t.remediation}</Label>
               <Textarea
                 id="new-remediation"
                 value={remediation}
                 onChange={(e) => setRemediation(e.target.value)}
                 rows={3}
-                placeholder="Beskriv hur regeln kan åtgärdas vid avvikelse..."
+                placeholder={t.remediationPlaceholder}
               />
             </div>
           </CardContent>
@@ -358,7 +451,7 @@ export function CreateComplianceRulePage() {
         <div className="flex justify-end">
           <Button onClick={handleCreate} disabled={!canSave || saving}>
             <Plus className="mr-1 size-4" />
-            {saving ? "Skapar..." : "Skapa regel"}
+            {saving ? t.creating : t.create}
           </Button>
         </div>
       </div>

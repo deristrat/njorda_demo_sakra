@@ -12,12 +12,26 @@ import {
 } from "@/components/ui/sheet";
 import { NotificationPanel } from "@/components/notifications/NotificationPanel";
 import { fetchUnreadCount } from "@/lib/api";
+import { useLanguage, type Lang } from "@/lib/language";
+
+const translations = {
+  sv: {
+    messages: "Meddelanden",
+    messagesListDesc: "Lista över meddelanden",
+  },
+  en: {
+    messages: "Messages",
+    messagesListDesc: "List of messages",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
 interface AppHeaderProps {
   title: string;
 }
 
 export function AppHeader({ title }: AppHeaderProps) {
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const [sheetOpen, setSheetOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -61,9 +75,9 @@ export function AppHeader({ title }: AppHeaderProps) {
           className="sm:max-w-[50vw] w-[50vw] p-0 flex flex-col"
         >
           <SheetHeader className="px-4 pt-4 pb-2 border-b">
-            <SheetTitle>Meddelanden</SheetTitle>
+            <SheetTitle>{t.messages}</SheetTitle>
             <SheetDescription className="sr-only">
-              Lista över meddelanden
+              {t.messagesListDesc}
             </SheetDescription>
           </SheetHeader>
           <NotificationPanel onUnreadCountChange={setUnreadCount} />

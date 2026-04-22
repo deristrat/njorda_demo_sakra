@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "react-router";
 import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,8 +16,8 @@ import {
 import { NjordaLogo } from "@/components/layout/NjordaLogo";
 import { useAuth } from "@/lib/auth";
 import { getDefaultPath } from "@/lib/navigation";
+import { useLanguage, type Lang } from "@/lib/language";
 
-type Lang = "sv" | "en";
 
 const translations = {
   sv: {
@@ -64,8 +64,7 @@ const translations = {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const lang: Lang = searchParams.get("lang") === "en" ? "en" : "sv";
+  const { lang, toggle: toggleLang } = useLanguage();
   const t = translations[lang];
   const { isAuthenticated, validateCredentials, completeLogin } = useAuth();
   const [username, setUsername] = useState("");
@@ -225,12 +224,13 @@ export function LoginPage() {
             </a>
           </p>
           <p className="mt-2 text-center text-[11px] leading-relaxed text-muted-foreground/70">
-            <Link
-              to={lang === "sv" ? "/login?lang=en" : "/login"}
+            <button
+              type="button"
+              onClick={toggleLang}
               className="underline underline-offset-2 hover:text-foreground"
             >
               {t.toggleLabel}
-            </Link>
+            </button>
           </p>
         </CardContent>
       </Card>

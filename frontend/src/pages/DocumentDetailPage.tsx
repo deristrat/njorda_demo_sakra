@@ -32,43 +32,183 @@ import { toast } from "sonner";
 import { CompliancePanel } from "@/components/compliance/CompliancePanel";
 import { SendCommentDialog } from "@/components/notifications/SendCommentDialog";
 import { useAuth } from "@/lib/auth";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { DocumentDetail, ExtractionData } from "@/types";
 
-const DOC_TYPE_LABELS: Record<string, string> = {
-  investment_advice: "Investeringsrådgivning",
-  pension_transfer: "Pensionsflytt",
-  insurance_advice: "Försäkringsrådgivning",
-  suitability_assessment: "Lämplighetsbedömning",
-  unknown: "Okänd",
-};
+const translations = {
+  sv: {
+    headerTitleFallback: "Dokument",
+    somethingWrong: "Något gick fel",
+    notFound: "Dokumentet hittades inte.",
+    back: "Tillbaka",
+    viewPdf: "Visa PDF",
+    hidePdf: "Dölj PDF",
+    showSideBySide: "Visa bredvid",
+    pdfPreviewTitle: "PDF-förhandsgranskning",
+    docInfo: "Dokumentinformation",
+    type: "Typ",
+    date: "Datum",
+    pages: "Sidor",
+    fileSize: "Filstorlek",
+    clientInfo: "Klientinformation",
+    name: "Namn",
+    personNumber: "Personnummer",
+    address: "Adress",
+    email: "E-post",
+    phone: "Telefon",
+    advisor: "Rådgivare",
+    company: "Företag",
+    license: "Licens",
+    suitability: "Lämplighetsbedömning",
+    riskProfile: "Riskprofil",
+    investmentHorizon: "Placeringshorisont",
+    experience: "Erfarenhet",
+    investmentObjective: "Placeringsmål",
+    lossTolerance: "Förlusttolerans",
+    financialSituation: "Ekonomisk situation",
+    recommendations: "Rekommendationer",
+    product: "Produkt",
+    amount: "Belopp",
+    share: "Andel",
+    motivation: "Motivering",
+    pensionTransfer: "Pensionsflytt",
+    from: "Från",
+    to: "Till",
+    extractionNotes: "Extraktionsnoteringar",
+    compliance: "Regelefterlevnad",
+    docTypeInvestment: "Investeringsrådgivning",
+    docTypePension: "Pensionsflytt",
+    docTypeInsurance: "Försäkringsrådgivning",
+    docTypeSuitability: "Lämplighetsbedömning",
+    docTypeUnknown: "Okänd",
+    riskVeryLow: "Mycket låg",
+    riskLow: "Låg",
+    riskMedium: "Medel",
+    riskMediumHigh: "Medel-hög",
+    riskHigh: "Hög",
+    riskVeryHigh: "Mycket hög",
+    expNone: "Ingen",
+    expLimited: "Begränsad",
+    expModerate: "Måttlig",
+    expExtensive: "Omfattande",
+    statusUploaded: "Uppladdad",
+    statusProcessing: "Bearbetar",
+    statusCompleted: "Klar",
+    statusFailed: "Misslyckades",
+  },
+  en: {
+    headerTitleFallback: "Document",
+    somethingWrong: "Something went wrong",
+    notFound: "Document not found.",
+    back: "Back",
+    viewPdf: "View PDF",
+    hidePdf: "Hide PDF",
+    showSideBySide: "Show side by side",
+    pdfPreviewTitle: "PDF preview",
+    docInfo: "Document information",
+    type: "Type",
+    date: "Date",
+    pages: "Pages",
+    fileSize: "File size",
+    clientInfo: "Client information",
+    name: "Name",
+    personNumber: "Personal ID",
+    address: "Address",
+    email: "Email",
+    phone: "Phone",
+    advisor: "Advisor",
+    company: "Company",
+    license: "License",
+    suitability: "Suitability assessment",
+    riskProfile: "Risk profile",
+    investmentHorizon: "Investment horizon",
+    experience: "Experience",
+    investmentObjective: "Investment objective",
+    lossTolerance: "Loss tolerance",
+    financialSituation: "Financial situation",
+    recommendations: "Recommendations",
+    product: "Product",
+    amount: "Amount",
+    share: "Share",
+    motivation: "Motivation",
+    pensionTransfer: "Pension transfer",
+    from: "From",
+    to: "To",
+    extractionNotes: "Extraction notes",
+    compliance: "Compliance",
+    docTypeInvestment: "Investment advice",
+    docTypePension: "Pension transfer",
+    docTypeInsurance: "Insurance advice",
+    docTypeSuitability: "Suitability assessment",
+    docTypeUnknown: "Unknown",
+    riskVeryLow: "Very low",
+    riskLow: "Low",
+    riskMedium: "Medium",
+    riskMediumHigh: "Medium-high",
+    riskHigh: "High",
+    riskVeryHigh: "Very high",
+    expNone: "None",
+    expLimited: "Limited",
+    expModerate: "Moderate",
+    expExtensive: "Extensive",
+    statusUploaded: "Uploaded",
+    statusProcessing: "Processing",
+    statusCompleted: "Completed",
+    statusFailed: "Failed",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
-const RISK_LABELS: Record<string, string> = {
-  very_low: "Mycket låg",
-  low: "Låg",
-  medium: "Medel",
-  medium_high: "Medel-hög",
-  high: "Hög",
-  very_high: "Mycket hög",
-};
+type T = typeof translations["sv"];
 
-const EXPERIENCE_LABELS: Record<string, string> = {
-  none: "Ingen",
-  limited: "Begränsad",
-  moderate: "Måttlig",
-  extensive: "Omfattande",
-};
+function getDocTypeLabels(t: T): Record<string, string> {
+  return {
+    investment_advice: t.docTypeInvestment,
+    pension_transfer: t.docTypePension,
+    insurance_advice: t.docTypeInsurance,
+    suitability_assessment: t.docTypeSuitability,
+    unknown: t.docTypeUnknown,
+  };
+}
 
-const STATUS_LABELS: Record<string, string> = {
-  uploaded: "Uppladdad",
-  processing: "Bearbetar",
-  completed: "Klar",
-  failed: "Misslyckades",
-};
+function getRiskLabels(t: T): Record<string, string> {
+  return {
+    very_low: t.riskVeryLow,
+    low: t.riskLow,
+    medium: t.riskMedium,
+    medium_high: t.riskMediumHigh,
+    high: t.riskHigh,
+    very_high: t.riskVeryHigh,
+  };
+}
+
+function getExperienceLabels(t: T): Record<string, string> {
+  return {
+    none: t.expNone,
+    limited: t.expLimited,
+    moderate: t.expModerate,
+    extensive: t.expExtensive,
+  };
+}
+
+function getStatusLabels(t: T): Record<string, string> {
+  return {
+    uploaded: t.statusUploaded,
+    processing: t.statusProcessing,
+    completed: t.statusCompleted,
+    failed: t.statusFailed,
+  };
+}
 
 export function DocumentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { effectiveRole } = useAuth();
+  const { lang } = useLanguage();
+  const t = translations[lang];
+  const DOC_TYPE_LABELS = getDocTypeLabels(t);
+  const RISK_LABELS = getRiskLabels(t);
+  const EXPERIENCE_LABELS = getExperienceLabels(t);
+  const STATUS_LABELS = getStatusLabels(t);
   const [doc, setDoc] = useState<DocumentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPdfPane, setShowPdfPane] = useState(false);
@@ -77,9 +217,9 @@ export function DocumentDetailPage() {
     if (!id) return;
     fetchDocument(Number(id))
       .then(setDoc)
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Något gick fel"))
+      .catch((e) => toast.error(e instanceof Error ? e.message : t.somethingWrong))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, t.somethingWrong]);
 
   useEffect(() => {
     if (doc) {
@@ -90,7 +230,7 @@ export function DocumentDetailPage() {
   if (loading) {
     return (
       <>
-        <AppHeader title="Dokument" />
+        <AppHeader title={t.headerTitleFallback} />
         <div className="p-6 space-y-4">
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-64 w-full" />
@@ -102,9 +242,9 @@ export function DocumentDetailPage() {
   if (!doc) {
     return (
       <>
-        <AppHeader title="Dokument" />
+        <AppHeader title={t.headerTitleFallback} />
         <div className="p-6">
-          <p className="text-muted-foreground">Dokumentet hittades inte.</p>
+          <p className="text-muted-foreground">{t.notFound}</p>
         </div>
       </>
     );
@@ -127,7 +267,7 @@ export function DocumentDetailPage() {
         <div className="flex items-center gap-3 flex-wrap">
           <Button variant="ghost" size="sm" onClick={() => navigate("/documents")}>
             <ArrowLeft className="mr-1 size-4" />
-            Tillbaka
+            {t.back}
           </Button>
           <Badge variant={statusVariant}>
             {STATUS_LABELS[doc.status] || doc.status}
@@ -140,7 +280,7 @@ export function DocumentDetailPage() {
               onClick={() => window.open(getDocumentFileUrl(doc.id), "_blank")}
             >
               <ExternalLink className="mr-1 size-4" />
-              Visa PDF
+              {t.viewPdf}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -153,12 +293,12 @@ export function DocumentDetailPage() {
                   {showPdfPane ? (
                     <>
                       <PanelRightClose className="mr-2 size-4" />
-                      Dölj PDF
+                      {t.hidePdf}
                     </>
                   ) : (
                     <>
                       <PanelRightOpen className="mr-2 size-4" />
-                      Visa bredvid
+                      {t.showSideBySide}
                     </>
                   )}
                 </DropdownMenuItem>
@@ -181,12 +321,12 @@ export function DocumentDetailPage() {
         {/* Dokumentinformation */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Dokumentinformation</CardTitle>
+            <CardTitle className="text-base">{t.docInfo}</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4">
               <div>
-                <dt className="text-xs text-muted-foreground">Typ</dt>
+                <dt className="text-xs text-muted-foreground">{t.type}</dt>
                 <dd className="text-sm font-medium">
                   {data?.document_type
                     ? DOC_TYPE_LABELS[data.document_type] || data.document_type
@@ -194,19 +334,19 @@ export function DocumentDetailPage() {
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Datum</dt>
+                <dt className="text-xs text-muted-foreground">{t.date}</dt>
                 <dd className="text-sm font-medium">
                   {data?.document_date ? formatDate(data.document_date) : "—"}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Sidor</dt>
+                <dt className="text-xs text-muted-foreground">{t.pages}</dt>
                 <dd className="text-sm font-medium">
                   {data?.page_count ?? "—"}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Filstorlek</dt>
+                <dt className="text-xs text-muted-foreground">{t.fileSize}</dt>
                 <dd className="text-sm font-medium">
                   {(doc.file_size / 1024).toFixed(0)} KB
                 </dd>
@@ -219,12 +359,12 @@ export function DocumentDetailPage() {
         {data?.client && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Klientinformation</CardTitle>
+              <CardTitle className="text-base">{t.clientInfo}</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
                 <div>
-                  <dt className="text-xs text-muted-foreground">Namn</dt>
+                  <dt className="text-xs text-muted-foreground">{t.name}</dt>
                   <dd className="text-sm font-medium">
                     {doc.client_id ? (
                       <a
@@ -239,19 +379,19 @@ export function DocumentDetailPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Personnummer</dt>
+                  <dt className="text-xs text-muted-foreground">{t.personNumber}</dt>
                   <dd className="text-sm font-medium font-brand">{data.client.person_number || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Adress</dt>
+                  <dt className="text-xs text-muted-foreground">{t.address}</dt>
                   <dd className="text-sm font-medium">{data.client.address || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">E-post</dt>
+                  <dt className="text-xs text-muted-foreground">{t.email}</dt>
                   <dd className="text-sm font-medium">{data.client.email || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Telefon</dt>
+                  <dt className="text-xs text-muted-foreground">{t.phone}</dt>
                   <dd className="text-sm font-medium">{data.client.phone || "—"}</dd>
                 </div>
               </dl>
@@ -263,12 +403,12 @@ export function DocumentDetailPage() {
         {data?.advisor && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Rådgivare</CardTitle>
+              <CardTitle className="text-base">{t.advisor}</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
                 <div>
-                  <dt className="text-xs text-muted-foreground">Namn</dt>
+                  <dt className="text-xs text-muted-foreground">{t.name}</dt>
                   <dd className="text-sm font-medium">
                     {doc.advisor_id ? (
                       <a
@@ -283,11 +423,11 @@ export function DocumentDetailPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Företag</dt>
+                  <dt className="text-xs text-muted-foreground">{t.company}</dt>
                   <dd className="text-sm font-medium">{data.advisor.firm_name || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Licens</dt>
+                  <dt className="text-xs text-muted-foreground">{t.license}</dt>
                   <dd className="text-sm font-medium">{data.advisor.license_number || "—"}</dd>
                 </div>
               </dl>
@@ -299,12 +439,12 @@ export function DocumentDetailPage() {
         {data?.suitability && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Lämplighetsbedömning</CardTitle>
+              <CardTitle className="text-base">{t.suitability}</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
                 <div>
-                  <dt className="text-xs text-muted-foreground">Riskprofil</dt>
+                  <dt className="text-xs text-muted-foreground">{t.riskProfile}</dt>
                   <dd className="text-sm font-medium">
                     {data.suitability.risk_profile
                       ? RISK_LABELS[data.suitability.risk_profile] || data.suitability.risk_profile
@@ -312,11 +452,11 @@ export function DocumentDetailPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Placeringshorisont</dt>
+                  <dt className="text-xs text-muted-foreground">{t.investmentHorizon}</dt>
                   <dd className="text-sm font-medium">{data.suitability.investment_horizon || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Erfarenhet</dt>
+                  <dt className="text-xs text-muted-foreground">{t.experience}</dt>
                   <dd className="text-sm font-medium">
                     {data.suitability.experience_level
                       ? EXPERIENCE_LABELS[data.suitability.experience_level] || data.suitability.experience_level
@@ -324,16 +464,16 @@ export function DocumentDetailPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Placeringsmål</dt>
+                  <dt className="text-xs text-muted-foreground">{t.investmentObjective}</dt>
                   <dd className="text-sm font-medium">{data.suitability.investment_objective || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Förlusttolerans</dt>
+                  <dt className="text-xs text-muted-foreground">{t.lossTolerance}</dt>
                   <dd className="text-sm font-medium">{data.suitability.loss_tolerance || "—"}</dd>
                 </div>
                 {data.suitability.financial_situation && (
                   <div className="col-span-2 sm:col-span-3">
-                    <dt className="text-xs text-muted-foreground">Ekonomisk situation</dt>
+                    <dt className="text-xs text-muted-foreground">{t.financialSituation}</dt>
                     <dd className="text-sm font-medium">{data.suitability.financial_situation}</dd>
                   </div>
                 )}
@@ -346,18 +486,18 @@ export function DocumentDetailPage() {
         {data?.recommendations && data.recommendations.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Rekommendationer</CardTitle>
+              <CardTitle className="text-base">{t.recommendations}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="rounded-lg border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Produkt</TableHead>
+                      <TableHead>{t.product}</TableHead>
                       <TableHead>ISIN</TableHead>
-                      <TableHead className="text-right">Belopp</TableHead>
-                      <TableHead className="text-right">Andel</TableHead>
-                      <TableHead>Motivering</TableHead>
+                      <TableHead className="text-right">{t.amount}</TableHead>
+                      <TableHead className="text-right">{t.share}</TableHead>
+                      <TableHead>{t.motivation}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -391,21 +531,21 @@ export function DocumentDetailPage() {
         {(data?.pension_provider_from || data?.pension_provider_to) && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Pensionsflytt</CardTitle>
+              <CardTitle className="text-base">{t.pensionTransfer}</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
                 <div>
-                  <dt className="text-xs text-muted-foreground">Från</dt>
+                  <dt className="text-xs text-muted-foreground">{t.from}</dt>
                   <dd className="text-sm font-medium">{data.pension_provider_from || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground">Till</dt>
+                  <dt className="text-xs text-muted-foreground">{t.to}</dt>
                   <dd className="text-sm font-medium">{data.pension_provider_to || "—"}</dd>
                 </div>
                 {data.transfer_amount != null && (
                   <div>
-                    <dt className="text-xs text-muted-foreground">Belopp</dt>
+                    <dt className="text-xs text-muted-foreground">{t.amount}</dt>
                     <dd className="text-sm font-medium font-brand">{formatSEK(data.transfer_amount)}</dd>
                   </div>
                 )}
@@ -418,7 +558,7 @@ export function DocumentDetailPage() {
         {data?.confidence_notes && data.confidence_notes.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Extraktionsnoteringar</CardTitle>
+              <CardTitle className="text-base">{t.extractionNotes}</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-1">
@@ -444,7 +584,7 @@ export function DocumentDetailPage() {
             <iframe
               src={getDocumentFileUrl(doc.id)}
               className="h-[calc(100vh-10rem)] w-full rounded-lg border"
-              title="PDF-förhandsgranskning"
+              title={t.pdfPreviewTitle}
             />
           </div>
         )}

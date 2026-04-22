@@ -1,78 +1,149 @@
 import { DocsHeader } from "@/components/docs/DocsHeader";
 import { DocsProse } from "@/components/docs/DocsProse";
 import { DocsCallout } from "@/components/docs/DocsCallout";
+import { useLanguage, type Lang } from "@/lib/language";
+
+const translations = {
+  sv: {
+    headerTitle: "Arbeta med dokument",
+    heading: "Arbeta med dokument",
+    intro:
+      "Dokumentsidan ger en översikt av alla uppladdade dokument med möjlighet att sortera, filtrera och granska varje enskilt dokument i detalj.",
+    listHeading: "Dokumentlistan",
+    listIntro: "Listan visar alla dokument med följande kolumner:",
+    listItemNameStrong: "Namn",
+    listItemName: " — Dokumentets filnamn",
+    listItemTypeStrong: "Typ",
+    listItemType:
+      " — Dokumenttyp (t.ex. rådgivningsdokumentation, pensionsflytt)",
+    listItemStatusStrong: "Status",
+    listItemStatus: " — Bearbetningsstatus (bearbetar, klar, fel)",
+    listItemScoreStrong: "Poäng",
+    listItemScore: " — Regelefterlevnadspoäng med trafikljusfärg",
+    listItemUploadedStrong: "Uppladdad",
+    listItemUploaded: " — Datum och tid för uppladdning",
+    sortingHeading: "Sortering och filtrering",
+    sortingBody:
+      "Klicka på kolumnrubriker för att sortera listan. Du kan även filtrera dokument efter status, typ eller poängintervall med hjälp av filtermenyerna ovanför listan.",
+    detailHeading: "Detaljvy",
+    detailIntro:
+      "Klicka på ett dokument i listan för att öppna dess detaljvy. Detaljvyn visar:",
+    detailItemPdfStrong: "PDF-visning",
+    detailItemPdf: " — Det ursprungliga dokumentet renderat i en PDF-läsare",
+    detailItemDataStrong: "Extraherad data",
+    detailItemData:
+      " — Metadata och nyckelfält som systemet har identifierat",
+    detailItemComplianceStrong: "Regelefterlevnad",
+    detailItemCompliance: " — Komplett regelgranskning med status per regel",
+    tipTitle: "Tips",
+    tipTextBefore: "Använd tangentkombinationen ",
+    tipTextMiddle: " (eller ",
+    tipTextAfter: " på Mac) för att söka i PDF-visningen.",
+  },
+  en: {
+    headerTitle: "Working with documents",
+    heading: "Working with documents",
+    intro:
+      "The documents page gives you an overview of all uploaded documents with options to sort, filter, and review each one in detail.",
+    listHeading: "The document list",
+    listIntro: "The list shows all documents with the following columns:",
+    listItemNameStrong: "Name",
+    listItemName: " — The document's file name",
+    listItemTypeStrong: "Type",
+    listItemType:
+      " — Document type (e.g. advisory documentation, pension transfer)",
+    listItemStatusStrong: "Status",
+    listItemStatus: " — Processing status (processing, done, error)",
+    listItemScoreStrong: "Score",
+    listItemScore: " — Compliance score with traffic-light color",
+    listItemUploadedStrong: "Uploaded",
+    listItemUploaded: " — Upload date and time",
+    sortingHeading: "Sorting and filtering",
+    sortingBody:
+      "Click column headers to sort the list. You can also filter documents by status, type, or score range using the filter menus above the list.",
+    detailHeading: "Detail view",
+    detailIntro:
+      "Click a document in the list to open its detail view. The detail view shows:",
+    detailItemPdfStrong: "PDF view",
+    detailItemPdf: " — The original document rendered in a PDF viewer",
+    detailItemDataStrong: "Extracted data",
+    detailItemData:
+      " — Metadata and key fields the system has identified",
+    detailItemComplianceStrong: "Compliance",
+    detailItemCompliance: " — Full rule review with status per rule",
+    tipTitle: "Tip",
+    tipTextBefore: "Use the keyboard shortcut ",
+    tipTextMiddle: " (or ",
+    tipTextAfter: " on Mac) to search within the PDF view.",
+  },
+} satisfies Record<Lang, Record<string, string>>;
 
 export function DocsDocumentsPage() {
+  const { lang } = useLanguage();
+  const t = translations[lang];
+
   return (
     <>
-      <DocsHeader title="Arbeta med dokument" />
+      <DocsHeader title={t.headerTitle} />
       <div className="p-6">
         <DocsProse>
-          <h2>Arbeta med dokument</h2>
-          <p>
-            Dokumentsidan ger en översikt av alla uppladdade dokument med
-            möjlighet att sortera, filtrera och granska varje enskilt dokument i
-            detalj.
-          </p>
+          <h2>{t.heading}</h2>
+          <p>{t.intro}</p>
 
-          <h3>Dokumentlistan</h3>
-          <p>
-            Listan visar alla dokument med följande kolumner:
-          </p>
+          <h3>{t.listHeading}</h3>
+          <p>{t.listIntro}</p>
           <ul>
             <li>
-              <strong>Namn</strong> — Dokumentets filnamn
+              <strong>{t.listItemNameStrong}</strong>
+              {t.listItemName}
             </li>
             <li>
-              <strong>Typ</strong> — Dokumenttyp (t.ex. rådgivningsdokumentation,
-              pensionsflytt)
+              <strong>{t.listItemTypeStrong}</strong>
+              {t.listItemType}
             </li>
             <li>
-              <strong>Status</strong> — Bearbetningsstatus (bearbetar, klar,
-              fel)
+              <strong>{t.listItemStatusStrong}</strong>
+              {t.listItemStatus}
             </li>
             <li>
-              <strong>Poäng</strong> — Regelefterlevnadspoäng med
-              trafikljusfärg
+              <strong>{t.listItemScoreStrong}</strong>
+              {t.listItemScore}
             </li>
             <li>
-              <strong>Uppladdad</strong> — Datum och tid för uppladdning
+              <strong>{t.listItemUploadedStrong}</strong>
+              {t.listItemUploaded}
             </li>
           </ul>
 
-          <h3>Sortering och filtrering</h3>
-          <p>
-            Klicka på kolumnrubriker för att sortera listan. Du kan även
-            filtrera dokument efter status, typ eller poängintervall med hjälp
-            av filtermenyerna ovanför listan.
-          </p>
+          <h3>{t.sortingHeading}</h3>
+          <p>{t.sortingBody}</p>
 
-          <h3>Detaljvy</h3>
-          <p>
-            Klicka på ett dokument i listan för att öppna dess detaljvy.
-            Detaljvyn visar:
-          </p>
+          <h3>{t.detailHeading}</h3>
+          <p>{t.detailIntro}</p>
           <ul>
             <li>
-              <strong>PDF-visning</strong> — Det ursprungliga dokumentet
-              renderat i en PDF-läsare
+              <strong>{t.detailItemPdfStrong}</strong>
+              {t.detailItemPdf}
             </li>
             <li>
-              <strong>Extraherad data</strong> — Metadata och nyckelfält som
-              systemet har identifierat
+              <strong>{t.detailItemDataStrong}</strong>
+              {t.detailItemData}
             </li>
             <li>
-              <strong>Regelefterlevnad</strong> — Komplett regelgranskning med
-              status per regel
+              <strong>{t.detailItemComplianceStrong}</strong>
+              {t.detailItemCompliance}
             </li>
           </ul>
         </DocsProse>
 
         <div className="max-w-3xl">
-          <DocsCallout variant="tip" title="Tips">
+          <DocsCallout variant="tip" title={t.tipTitle}>
             <p>
-              Använd tangentkombinationen <code>Ctrl+F</code> (eller{" "}
-              <code>Cmd+F</code> på Mac) för att söka i PDF-visningen.
+              {t.tipTextBefore}
+              <code>Ctrl+F</code>
+              {t.tipTextMiddle}
+              <code>Cmd+F</code>
+              {t.tipTextAfter}
             </p>
           </DocsCallout>
         </div>

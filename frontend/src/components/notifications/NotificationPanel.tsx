@@ -5,7 +5,46 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchMessages, fetchMessageThread, markMessageRead, replyToMessage } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
+import { useLanguage, type Lang } from "@/lib/language";
 import type { MessageItem } from "@/types";
+
+const translations = {
+  sv: {
+    back: "Tillbaka",
+    compliance: "Regelefterlevnad",
+    statusApproved: "Godkänd",
+    statusWarning: "Varning",
+    statusRejected: "Underkänd",
+    documentFallback: (id: number) => `Dokument #${id}`,
+    you: "Du",
+    unknown: "Okänd",
+    replyPlaceholder: "Skriv ett svar...",
+    noMessages: "Inga meddelanden.",
+  },
+  en: {
+    back: "Back",
+    compliance: "Compliance",
+    statusApproved: "Approved",
+    statusWarning: "Warning",
+    statusRejected: "Rejected",
+    documentFallback: (id: number) => `Document #${id}`,
+    you: "You",
+    unknown: "Unknown",
+    replyPlaceholder: "Type a reply…",
+    noMessages: "No messages.",
+  },
+} satisfies Record<Lang, {
+  back: string;
+  compliance: string;
+  statusApproved: string;
+  statusWarning: string;
+  statusRejected: string;
+  documentFallback: (id: number) => string;
+  you: string;
+  unknown: string;
+  replyPlaceholder: string;
+  noMessages: string;
+}>;
 
 function scoreColor(score: number | null): string {
   if (score == null) return "text-muted-foreground";
@@ -26,6 +65,8 @@ interface NotificationPanelProps {
 }
 
 export function NotificationPanel({ onUnreadCountChange }: NotificationPanelProps) {
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<MessageItem | null>(null);
@@ -111,7 +152,7 @@ export function NotificationPanel({ onUnreadCountChange }: NotificationPanelProp
             onClick={handleBack}
           >
             <ArrowLeft className="mr-1 size-4" />
-            Tillbaka
+            {t.back}
           </Button>
         </div>
 
@@ -126,11 +167,11 @@ export function NotificationPanel({ onUnreadCountChange }: NotificationPanelProp
                 {root.compliance_score}
               </span>
               <div className="text-sm">
-                <div className="font-medium">Regelefterlevnad</div>
+                <div className="font-medium">{t.compliance}</div>
                 <div className="text-muted-foreground">
-                  {root.compliance_status === "green" && "Godkänd"}
-                  {root.compliance_status === "yellow" && "Varning"}
-                  {root.compliance_status === "red" && "Underkänd"}
+                  {root.compliance_status === "green" && t.statusApproved}
+                  {root.compliance_status === "yellow" && t.statusWarning}
+                  {root.compliance_status === "red" && t.statusRejected}
                 </div>
               </div>
             </div>
@@ -142,7 +183,7 @@ export function NotificationPanel({ onUnreadCountChange }: NotificationPanelProp
               className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
             >
               <FileText className="size-4" />
-              {root.document_filename || `Dokument #${root.document_id}`}
+              {root.document_filename || t.documentFallback(root.document_id)}
             </a>
           )}
 
@@ -171,7 +212,7 @@ export function NotificationPanel({ onUnreadCountChange }: NotificationPanelProp
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium text-xs">
-                          {isMe ? "Du" : (msg.sender_name || "Okänd")}
+                          {isMe ? t.you : (msg.sender_name || t.unknown)}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {formatDate(msg.created_at)}
@@ -192,7 +233,7 @@ export function NotificationPanel({ onUnreadCountChange }: NotificationPanelProp
             <textarea
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Skriv ett svar..."
+              placeholder={t.replyPlaceholder}
               className="flex-1 min-h-[60px] max-h-[120px] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -229,7 +270,7 @@ export function NotificationPanel({ onUnreadCountChange }: NotificationPanelProp
   if (messages.length === 0) {
     return (
       <div className="p-4 text-sm text-muted-foreground">
-        Inga meddelanden.
+        {t.noMessages}
       </div>
     );
   }

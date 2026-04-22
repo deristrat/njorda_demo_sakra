@@ -1,8 +1,22 @@
+import { useLanguage, type Lang } from "@/lib/language";
+
 interface NjordaLogoProps {
   collapsed?: boolean;
 }
 
+const translations = {
+  sv: {
+    tagline: "Rådgivnings Hub",
+  },
+  en: {
+    tagline: "Advisory Hub",
+  },
+} satisfies Record<Lang, Record<string, string>>;
+
 export function NjordaLogo({ collapsed }: NjordaLogoProps) {
+  const { lang } = useLanguage();
+  const t = translations[lang];
+
   if (collapsed) {
     return (
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
@@ -43,7 +57,7 @@ export function NjordaLogo({ collapsed }: NjordaLogoProps) {
         </svg>
         <div className="flex flex-col -space-y-0.5">
           <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-            Rådgivnings Hub
+            {t.tagline}
           </span>
           <span className="text-lg font-bold tracking-wide text-[#1B4F8A]" style={{ fontFamily: "system-ui, sans-serif" }}>
             SÄKRA

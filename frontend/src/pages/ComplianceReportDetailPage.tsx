@@ -28,6 +28,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { fetchComplianceReport } from "@/lib/api";
+import { useLanguage, type Lang } from "@/lib/language";
 import { toast } from "sonner";
 import type {
   ComplianceReportRunDetail,
@@ -41,24 +42,143 @@ const STATUS_COLORS: Record<string, string> = {
   red: "bg-red-500",
 };
 
-const DOC_TYPE_LABELS: Record<string, string> = {
-  investment_advice: "Placeringsrådgivning",
-  pension_transfer: "Pensionsflytt",
-  suitability_assessment: "Lämplighetsbedömning",
-  insurance_advice: "Försäkringsrådgivning",
-  unknown: "Okänd",
-};
+const translations = {
+  sv: {
+    pageTitle: "Compliance rapport — Säkra",
+    headerTitle: "Compliance rapport",
+    back: "Tillbaka",
+    backToReports: "Tillbaka till rapporter",
+    notFound: "Rapporten hittades inte eller saknar data.",
+    somethingWentWrong: "Något gick fel",
+    kpiAverageScore: "Snittpoäng",
+    kpiTotalDocuments: "Totalt dokument",
+    kpiGreen: "Gröna",
+    kpiGreenSub: "Godkända",
+    kpiYellowRed: "Gula / Röda",
+    kpiYellowRedSub: "Varning / Underkända",
+    kpiComplianceRate: "Compliance-grad",
+    criticalIssuesTitle: "Kritiska avvikelser",
+    noCriticalIssues: "Inga kritiska avvikelser hittades.",
+    mostFailedRulesTitle: "Vanligast brutna regler",
+    noFailedRules: "Inga regelöverträdelser registrerade.",
+    perAdvisorTitle: "Per rådgivare",
+    noAdvisorData: "Ingen rådgivardata tillgänglig.",
+    docTypeCoverageTitle: "Dokumenttypstäckning",
+    noCoverageData: "Ingen data tillgänglig.",
+    colDocument: "Dokument",
+    colClient: "Klient",
+    colAdvisor: "Rådgivare",
+    colScore: "Poäng",
+    colFailedRules: "Brutna regler",
+    colStatus: "Status",
+    docs: "dok",
+    violations: "brott",
+    allApproved: "Alla dokument godkända.",
+    averageScorePrefix: "Snittpoäng:",
+    statusGreen: "Godkänd",
+    statusYellow: "Varning",
+    statusRed: "Underkänd",
+    docTypes: {
+      investment_advice: "Placeringsrådgivning",
+      pension_transfer: "Pensionsflytt",
+      suitability_assessment: "Lämplighetsbedömning",
+      insurance_advice: "Försäkringsrådgivning",
+      unknown: "Okänd",
+    },
+  },
+  en: {
+    pageTitle: "Compliance report — Säkra",
+    headerTitle: "Compliance report",
+    back: "Back",
+    backToReports: "Back to reports",
+    notFound: "Report not found or missing data.",
+    somethingWentWrong: "Something went wrong",
+    kpiAverageScore: "Average score",
+    kpiTotalDocuments: "Total documents",
+    kpiGreen: "Green",
+    kpiGreenSub: "Approved",
+    kpiYellowRed: "Yellow / Red",
+    kpiYellowRedSub: "Warning / Rejected",
+    kpiComplianceRate: "Compliance rate",
+    criticalIssuesTitle: "Critical issues",
+    noCriticalIssues: "No critical issues found.",
+    mostFailedRulesTitle: "Most broken rules",
+    noFailedRules: "No rule violations recorded.",
+    perAdvisorTitle: "Per advisor",
+    noAdvisorData: "No advisor data available.",
+    docTypeCoverageTitle: "Document type coverage",
+    noCoverageData: "No data available.",
+    colDocument: "Document",
+    colClient: "Client",
+    colAdvisor: "Advisor",
+    colScore: "Score",
+    colFailedRules: "Broken rules",
+    colStatus: "Status",
+    docs: "docs",
+    violations: "violations",
+    allApproved: "All documents approved.",
+    averageScorePrefix: "Average score:",
+    statusGreen: "Approved",
+    statusYellow: "Warning",
+    statusRed: "Rejected",
+    docTypes: {
+      investment_advice: "Investment advice",
+      pension_transfer: "Pension transfer",
+      suitability_assessment: "Suitability assessment",
+      insurance_advice: "Insurance advice",
+      unknown: "Unknown",
+    },
+  },
+} satisfies Record<Lang, {
+  pageTitle: string;
+  headerTitle: string;
+  back: string;
+  backToReports: string;
+  notFound: string;
+  somethingWentWrong: string;
+  kpiAverageScore: string;
+  kpiTotalDocuments: string;
+  kpiGreen: string;
+  kpiGreenSub: string;
+  kpiYellowRed: string;
+  kpiYellowRedSub: string;
+  kpiComplianceRate: string;
+  criticalIssuesTitle: string;
+  noCriticalIssues: string;
+  mostFailedRulesTitle: string;
+  noFailedRules: string;
+  perAdvisorTitle: string;
+  noAdvisorData: string;
+  docTypeCoverageTitle: string;
+  noCoverageData: string;
+  colDocument: string;
+  colClient: string;
+  colAdvisor: string;
+  colScore: string;
+  colFailedRules: string;
+  colStatus: string;
+  docs: string;
+  violations: string;
+  allApproved: string;
+  averageScorePrefix: string;
+  statusGreen: string;
+  statusYellow: string;
+  statusRed: string;
+  docTypes: Record<string, string>;
+}>;
 
-function StatusBadge({ status }: { status: string }) {
+type T = typeof translations["sv"];
+
+function StatusBadge({ status, t }: { status: string; t: T }) {
   const colors: Record<string, string> = {
     green: "bg-emerald-100 text-emerald-800",
     yellow: "bg-amber-100 text-amber-800",
     red: "bg-red-100 text-red-800",
   };
   const labels: Record<string, string> = {
-    green: "Godkänd",
-    yellow: "Varning",
-    red: "Underkänd",
+    green: t.statusGreen,
+    yellow: t.statusYellow,
+    red: t.statusRed,
   };
   return (
     <span
@@ -105,11 +225,11 @@ function DocLink({ docId, children }: { docId: number; children: React.ReactNode
   );
 }
 
-function CriticalItemsSection({ items }: { items: CriticalItem[] }) {
+function CriticalItemsSection({ items, t }: { items: CriticalItem[]; t: T }) {
   if (items.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Inga kritiska avvikelser hittades.
+        {t.noCriticalIssues}
       </p>
     );
   }
@@ -118,11 +238,11 @@ function CriticalItemsSection({ items }: { items: CriticalItem[] }) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Dokument</TableHead>
-            <TableHead>Klient</TableHead>
-            <TableHead>Rådgivare</TableHead>
-            <TableHead>Poäng</TableHead>
-            <TableHead>Brutna regler</TableHead>
+            <TableHead>{t.colDocument}</TableHead>
+            <TableHead>{t.colClient}</TableHead>
+            <TableHead>{t.colAdvisor}</TableHead>
+            <TableHead>{t.colScore}</TableHead>
+            <TableHead>{t.colFailedRules}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -194,9 +314,11 @@ function buildRuleDocsMap(advisors: AdvisorBreakdown[]): Record<string, RuleDoc[
 function FailedRuleCard({
   rule,
   docs,
+  t,
 }: {
   rule: { rule_id: string; rule_name: string; fail_count: number; category: string };
   docs: RuleDoc[];
+  t: T;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -217,7 +339,7 @@ function FailedRuleCard({
                 <Badge variant="outline" className="font-normal">
                   {rule.category}
                 </Badge>
-                <span className="font-mono">{rule.fail_count} brott</span>
+                <span className="font-mono">{rule.fail_count} {t.violations}</span>
               </div>
             </div>
           </CardHeader>
@@ -227,10 +349,10 @@ function FailedRuleCard({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Dokument</TableHead>
-                  <TableHead>Klient</TableHead>
-                  <TableHead>Poäng</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t.colDocument}</TableHead>
+                  <TableHead>{t.colClient}</TableHead>
+                  <TableHead>{t.colScore}</TableHead>
+                  <TableHead>{t.colStatus}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -246,7 +368,7 @@ function FailedRuleCard({
                       {doc.score}%
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={doc.status} />
+                      <StatusBadge status={doc.status} t={t} />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -262,6 +384,7 @@ function FailedRuleCard({
 function MostFailedRulesSection({
   rules,
   ruleDocsMap,
+  t,
 }: {
   rules: Array<{
     rule_id: string;
@@ -270,11 +393,12 @@ function MostFailedRulesSection({
     category: string;
   }>;
   ruleDocsMap: Record<string, RuleDoc[]>;
+  t: T;
 }) {
   if (rules.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Inga regelöverträdelser registrerade.
+        {t.noFailedRules}
       </p>
     );
   }
@@ -285,13 +409,14 @@ function MostFailedRulesSection({
           key={r.rule_id}
           rule={r}
           docs={ruleDocsMap[r.rule_id] || []}
+          t={t}
         />
       ))}
     </div>
   );
 }
 
-function AdvisorCard({ advisor }: { advisor: AdvisorBreakdown }) {
+function AdvisorCard({ advisor, t }: { advisor: AdvisorBreakdown; t: T }) {
   const [open, setOpen] = useState(false);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -308,7 +433,7 @@ function AdvisorCard({ advisor }: { advisor: AdvisorBreakdown }) {
                 <CardTitle className="text-base">{advisor.advisor_name}</CardTitle>
               </div>
               <div className="flex items-center gap-4 text-sm">
-                <span>{advisor.document_count} dok</span>
+                <span>{advisor.document_count} {t.docs}</span>
                 <span className="font-mono">{advisor.average_score}%</span>
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1">
@@ -334,11 +459,11 @@ function AdvisorCard({ advisor }: { advisor: AdvisorBreakdown }) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Dokument</TableHead>
-                    <TableHead>Klient</TableHead>
-                    <TableHead>Poäng</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Brutna regler</TableHead>
+                    <TableHead>{t.colDocument}</TableHead>
+                    <TableHead>{t.colClient}</TableHead>
+                    <TableHead>{t.colScore}</TableHead>
+                    <TableHead>{t.colStatus}</TableHead>
+                    <TableHead>{t.colFailedRules}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -356,7 +481,7 @@ function AdvisorCard({ advisor }: { advisor: AdvisorBreakdown }) {
                           {doc.score}%
                         </TableCell>
                         <TableCell>
-                          <StatusBadge status={doc.status} />
+                          <StatusBadge status={doc.status} t={t} />
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
@@ -377,7 +502,7 @@ function AdvisorCard({ advisor }: { advisor: AdvisorBreakdown }) {
               </Table>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Alla dokument godkända.
+                {t.allApproved}
               </p>
             )}
           </CardContent>
@@ -389,13 +514,15 @@ function AdvisorCard({ advisor }: { advisor: AdvisorBreakdown }) {
 
 function DocTypeCoverageSection({
   coverage,
+  t,
 }: {
   coverage: Record<string, { count: number; avg_score: number }>;
+  t: T;
 }) {
   const entries = Object.entries(coverage);
   if (entries.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">Ingen data tillgänglig.</p>
+      <p className="text-sm text-muted-foreground">{t.noCoverageData}</p>
     );
   }
   return (
@@ -404,11 +531,11 @@ function DocTypeCoverageSection({
         <Card key={type}>
           <CardContent className="py-4">
             <p className="text-sm font-medium">
-              {DOC_TYPE_LABELS[type] || type}
+              {t.docTypes[type] || type}
             </p>
-            <p className="font-brand text-xl">{data.count} dok</p>
+            <p className="font-brand text-xl">{data.count} {t.docs}</p>
             <p className="text-xs text-muted-foreground">
-              Snittpoäng: {data.avg_score}%
+              {t.averageScorePrefix} {data.avg_score}%
             </p>
           </CardContent>
         </Card>
@@ -420,12 +547,14 @@ function DocTypeCoverageSection({
 export function ComplianceReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const [report, setReport] = useState<ComplianceReportRunDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = "Compliance rapport — Säkra";
-  }, []);
+    document.title = t.pageTitle;
+  }, [t.pageTitle]);
 
   useEffect(() => {
     if (!id) return;
@@ -435,15 +564,16 @@ export function ComplianceReportDetailPage() {
         document.title = `${r.title} — Säkra`;
       })
       .catch((e) =>
-        toast.error(e instanceof Error ? e.message : "Något gick fel"),
+        toast.error(e instanceof Error ? e.message : t.somethingWentWrong),
       )
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   if (loading) {
     return (
       <>
-        <AppHeader title="Compliance rapport" />
+        <AppHeader title={t.headerTitle} />
         <div className="p-6 space-y-4">
           <Skeleton className="h-8 w-48" />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -460,7 +590,7 @@ export function ComplianceReportDetailPage() {
   if (!report || !report.report_data) {
     return (
       <>
-        <AppHeader title="Compliance rapport" />
+        <AppHeader title={t.headerTitle} />
         <div className="p-6">
           <Button
             variant="ghost"
@@ -468,10 +598,10 @@ export function ComplianceReportDetailPage() {
             onClick={() => navigate("/reports/compliance")}
           >
             <ArrowLeft className="mr-1 size-4" />
-            Tillbaka
+            {t.back}
           </Button>
           <p className="mt-4 text-muted-foreground">
-            Rapporten hittades inte eller saknar data.
+            {t.notFound}
           </p>
         </div>
       </>
@@ -492,31 +622,31 @@ export function ComplianceReportDetailPage() {
           onClick={() => navigate("/reports/compliance")}
         >
           <ArrowLeft className="mr-1 size-4" />
-          Tillbaka till rapporter
+          {t.backToReports}
         </Button>
 
         {/* KPI cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <KpiCard
-            label="Snittpoäng"
+            label={t.kpiAverageScore}
             value={`${data.average_score}%`}
           />
           <KpiCard
-            label="Totalt dokument"
+            label={t.kpiTotalDocuments}
             value={data.total_documents}
           />
           <KpiCard
-            label="Gröna"
+            label={t.kpiGreen}
             value={data.status_distribution.green}
-            sub="Godkända"
+            sub={t.kpiGreenSub}
           />
           <KpiCard
-            label="Gula / Röda"
+            label={t.kpiYellowRed}
             value={`${data.status_distribution.yellow} / ${data.status_distribution.red}`}
-            sub="Varning / Underkända"
+            sub={t.kpiYellowRedSub}
           />
           <KpiCard
-            label="Compliance-grad"
+            label={t.kpiComplianceRate}
             value={`${data.compliance_rate}%`}
           />
         </div>
@@ -525,25 +655,25 @@ export function ComplianceReportDetailPage() {
         <section className="space-y-3">
           <div className="flex items-center gap-2">
             <AlertTriangle className="size-5 text-red-500" />
-            <h2 className="font-brand text-lg">Kritiska avvikelser</h2>
+            <h2 className="font-brand text-lg">{t.criticalIssuesTitle}</h2>
           </div>
-          <CriticalItemsSection items={data.critical_items} />
+          <CriticalItemsSection items={data.critical_items} t={t} />
         </section>
 
         {/* Most failed rules */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
             <FileText className="size-5 text-muted-foreground" />
-            <h2 className="font-brand text-lg">Vanligast brutna regler</h2>
+            <h2 className="font-brand text-lg">{t.mostFailedRulesTitle}</h2>
           </div>
-          <MostFailedRulesSection rules={data.most_failed_rules} ruleDocsMap={ruleDocsMap} />
+          <MostFailedRulesSection rules={data.most_failed_rules} ruleDocsMap={ruleDocsMap} t={t} />
         </section>
 
         {/* Advisor breakdown */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
             <Users className="size-5 text-muted-foreground" />
-            <h2 className="font-brand text-lg">Per rådgivare</h2>
+            <h2 className="font-brand text-lg">{t.perAdvisorTitle}</h2>
           </div>
           <div className="space-y-3">
             {data.advisor_breakdown.length > 0 ? (
@@ -551,11 +681,12 @@ export function ComplianceReportDetailPage() {
                 <AdvisorCard
                   key={advisor.advisor_id ?? "unknown"}
                   advisor={advisor}
+                  t={t}
                 />
               ))
             ) : (
               <p className="text-sm text-muted-foreground">
-                Ingen rådgivardata tillgänglig.
+                {t.noAdvisorData}
               </p>
             )}
           </div>
@@ -565,9 +696,9 @@ export function ComplianceReportDetailPage() {
         <section className="space-y-3">
           <div className="flex items-center gap-2">
             <BarChart3 className="size-5 text-muted-foreground" />
-            <h2 className="font-brand text-lg">Dokumenttypstäckning</h2>
+            <h2 className="font-brand text-lg">{t.docTypeCoverageTitle}</h2>
           </div>
-          <DocTypeCoverageSection coverage={data.document_type_coverage} />
+          <DocTypeCoverageSection coverage={data.document_type_coverage} t={t} />
         </section>
       </div>
     </>
