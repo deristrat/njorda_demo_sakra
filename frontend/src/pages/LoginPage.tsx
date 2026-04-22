@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,8 +17,56 @@ import { NjordaLogo } from "@/components/layout/NjordaLogo";
 import { useAuth } from "@/lib/auth";
 import { getDefaultPath } from "@/lib/navigation";
 
+type Lang = "sv" | "en";
+
+const translations = {
+  sv: {
+    pageTitle: "Logga in — Säkra",
+    subtitle: "Logga in på ditt konto",
+    usernameLabel: "Användarnamn",
+    usernamePlaceholder: "username",
+    passwordLabel: "Lösenord",
+    gdprConsent:
+      "Jag bekräftar att jag ansvarar för att rätt kunddata lagras i systemet i enlighet med gällande regelverk.",
+    loginFailed: "Inloggningen misslyckades",
+    signingIn: "Loggar in...",
+    signIn: "Logga in",
+    privacyLead: "Vi värnar om din integritet.",
+    privacyLink: "Läs om hur vi hanterar data →",
+    twoFATitle: "Tvåfaktorsautentisering",
+    twoFADesc: "Ange den 6-siffriga koden från din autentiseringsapp",
+    twoFAError: "Ange en 6-siffrig kod",
+    verifying: "Verifierar...",
+    verify: "Verifiera",
+    toggleLabel: "English",
+  },
+  en: {
+    pageTitle: "Sign in — Säkra",
+    subtitle: "Sign in to your account",
+    usernameLabel: "Username",
+    usernamePlaceholder: "username",
+    passwordLabel: "Password",
+    gdprConsent:
+      "I confirm that I am responsible for ensuring the correct client data is stored in the system in accordance with applicable regulations.",
+    loginFailed: "Sign-in failed",
+    signingIn: "Signing in…",
+    signIn: "Sign in",
+    privacyLead: "We respect your privacy.",
+    privacyLink: "Read how we handle data →",
+    twoFATitle: "Two-factor authentication",
+    twoFADesc: "Enter the 6-digit code from your authenticator app",
+    twoFAError: "Enter a 6-digit code",
+    verifying: "Verifying…",
+    verify: "Verify",
+    toggleLabel: "Svenska",
+  },
+} satisfies Record<Lang, Record<string, string>>;
+
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const lang: Lang = searchParams.get("lang") === "en" ? "en" : "sv";
+  const t = translations[lang];
   const { isAuthenticated, validateCredentials, completeLogin } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -35,8 +83,8 @@ export function LoginPage() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
-    document.title = "Logga in — Säkra";
-  }, []);
+    document.title = t.pageTitle;
+  }, [t.pageTitle]);
 
   useEffect(() => {
     if (isAuthenticated) navigate(getDefaultPath(), { replace: true });
@@ -50,7 +98,7 @@ export function LoginPage() {
       await validateCredentials(username, password);
       setShow2FA(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Inloggningen misslyckades");
+      setError(err instanceof Error ? err.message : t.loginFailed);
     } finally {
       setLoading(false);
     }
@@ -110,7 +158,7 @@ export function LoginPage() {
   function handleVerify() {
     const fullCode = code.join("");
     if (fullCode.length !== 6) {
-      setTwoFAError("Ange en 6-siffrig kod");
+      setTwoFAError(t.twoFAError);
       return;
     }
     setVerifying(true);
@@ -127,23 +175,23 @@ export function LoginPage() {
         <CardHeader className="items-center space-y-4 pb-2">
           <NjordaLogo />
           <p className="text-sm text-muted-foreground">
-            Logga in på ditt konto
+            {t.subtitle}
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Användarnamn</Label>
+              <Label htmlFor="username">{t.usernameLabel}</Label>
               <Input
                 id="username"
                 type="text"
-                placeholder="username"
+                placeholder={t.usernamePlaceholder}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Lösenord</Label>
+              <Label htmlFor="password">{t.passwordLabel}</Label>
               <Input
                 id="password"
                 type="password"
@@ -160,21 +208,29 @@ export function LoginPage() {
                 className="mt-0.5"
               />
               <label htmlFor="gdpr-consent" className="text-xs leading-snug text-muted-foreground cursor-pointer">
-                Jag bekräftar att jag ansvarar för att rätt kunddata lagras i systemet i enlighet med gällande regelverk.
+                {t.gdprConsent}
               </label>
             </div>
             {error && (
               <p className="text-sm text-destructive">{error}</p>
             )}
             <Button type="submit" className="w-full" disabled={loading || !gdprConsent}>
-              {loading ? "Loggar in..." : "Logga in"}
+              {loading ? t.signingIn : t.signIn}
             </Button>
           </form>
           <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground/70">
-            Vi värnar om din integritet.{" "}
+            {t.privacyLead}{" "}
             <a href="#" className="underline underline-offset-2 hover:text-foreground">
-              Läs om hur vi hanterar data &rarr;
+              {t.privacyLink}
             </a>
+          </p>
+          <p className="mt-2 text-center text-[11px] leading-relaxed text-muted-foreground/70">
+            <Link
+              to={lang === "sv" ? "/login?lang=en" : "/login"}
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              {t.toggleLabel}
+            </Link>
           </p>
         </CardContent>
       </Card>
@@ -185,9 +241,9 @@ export function LoginPage() {
             <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10">
               <ShieldCheck className="size-6 text-primary" />
             </div>
-            <DialogTitle>Tvåfaktorsautentisering</DialogTitle>
+            <DialogTitle>{t.twoFATitle}</DialogTitle>
             <DialogDescription>
-              Ange den 6-siffriga koden från din autentiseringsapp
+              {t.twoFADesc}
             </DialogDescription>
           </DialogHeader>
 
@@ -218,7 +274,7 @@ export function LoginPage() {
               className="w-full"
               disabled={verifying || code.join("").length !== 6}
             >
-              {verifying ? "Verifierar..." : "Verifiera"}
+              {verifying ? t.verifying : t.verify}
             </Button>
           </div>
         </DialogContent>
