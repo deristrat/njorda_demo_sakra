@@ -121,7 +121,7 @@ function getColumns(t: T): ColumnDef<AuditEventListItem>[] {
         const type = getValue<string>();
         return (
           <Badge variant="outline" className="font-normal">
-            {t.eventTypes[type] ?? type}
+            {(t.eventTypes as Record<string, string>)[type] ?? type}
           </Badge>
         );
       },

@@ -129,7 +129,7 @@ export function AuditEventDetailPage() {
             {t.back}
           </Button>
           <Badge variant="outline">
-            {t.eventTypes[event.event_type] ?? event.event_type}
+            {(t.eventTypes as Record<string, string>)[event.event_type] ?? event.event_type}
           </Badge>
           <span className="text-sm text-muted-foreground">
             {formatDateTime(event.created_at)}
@@ -143,7 +143,7 @@ export function AuditEventDetailPage() {
           <CardContent>
             <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
               <dt className="font-medium text-muted-foreground">{t.labelType}</dt>
-              <dd>{t.eventTypes[event.event_type] ?? event.event_type}</dd>
+              <dd>{(t.eventTypes as Record<string, string>)[event.event_type] ?? event.event_type}</dd>
 
               <dt className="font-medium text-muted-foreground">{t.labelUser}</dt>
               <dd>{event.actor}</dd>

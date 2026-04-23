@@ -531,7 +531,7 @@ function DocTypeCoverageSection({
         <Card key={type}>
           <CardContent className="py-4">
             <p className="text-sm font-medium">
-              {t.docTypes[type] || type}
+              {(t.docTypes as Record<string, string>)[type] || type}
             </p>
             <p className="font-brand text-xl">{data.count} {t.docs}</p>
             <p className="text-xs text-muted-foreground">
